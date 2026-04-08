@@ -4,7 +4,14 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
-import {ExtensionPreferences} from 'resource:///org/gnome/shell/extensions/prefs.js';
+
+// GNOME Shell 49 moved the prefs module to a new resource path.
+// Try the new path first, fall back to the pre-49 path.
+const {ExtensionPreferences} = await import(
+    'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js'
+).catch(() => import(
+    'resource:///org/gnome/shell/extensions/prefs.js'
+));
 
 const SCHEMA_ID = 'org.gnome.shell.extensions.thermal-throttle-monitor';
 
