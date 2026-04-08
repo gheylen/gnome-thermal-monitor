@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.thermal-throttle-monitor"
+          path="/org/gnome/shell/extensions/thermal-throttle-monitor/">
+
+    <key name="temp-warn" type="i">
+      <default>88</default>
+      <summary>Warning temperature (°C)</summary>
+      <description>Panel indicator turns orange above this temperature.</description>
+    </key>
+
+    <key name="temp-crit" type="i">
+      <default>94</default>
+      <summary>Critical temperature (°C)</summary>
+      <description>Panel indicator turns red; throttling imminent or active.</description>
+    </key>
+
+    <key name="poll-interval" type="i">
+      <default>10</default>
+      <summary>Poll interval (seconds)</summary>
+      <description>How often to read thermal sensors and throttle counters.</description>
+    </key>
+
+  </schema>
+</schemalist>

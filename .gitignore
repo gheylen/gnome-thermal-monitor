@@ -1,0 +1,38 @@
+# ── Build output ──────────────────────────────────────────────────────────────
+dist/
+schemas/gschemas.compiled
+
+# ── Node.js (dev tooling only) ────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.*
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store           # macOS
+Thumbs.db           # Windows
+desktop.ini         # Windows
+$RECYCLE.BIN/       # Windows
+
+# ── Editors & IDEs ────────────────────────────────────────────────────────────
+.vscode/            # VS Code
+.idea/              # JetBrains (IntelliJ, WebStorm, CLion, …)
+.fleet/             # JetBrains Fleet
+.zed/               # Zed
+*.sublime-project   # Sublime Text
+*.sublime-workspace
+*.kate-swp          # Kate
+*.swp               # Vim / Neovim
+*.swo
+.*.swp
+*~                  # Emacs / general editor backups
+\#*\#               # Emacs auto-save
+.#*                 # Emacs lock files
+*.orig              # Merge conflict originals
+*.bak
