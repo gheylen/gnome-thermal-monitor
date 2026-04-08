@@ -94,7 +94,7 @@ Extensions application.
 ### From source
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/gheylen/gnome-thermal-monitor
 cd gnome-thermal-monitor
 
 # Compile the GSettings schema (required once, and after editing schemas/*.gschema.xml)
