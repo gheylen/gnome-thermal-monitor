@@ -7,12 +7,14 @@ all: pack
 # Build distributable zip (output: dist/<UUID>.shell-extension.zip)
 pack: schema
 	mkdir -p dist
-	gnome-extensions pack \
-		--extra-source=backends/ \
-		--extra-source=lib/ \
-		--force \
-		-o dist/ \
-		.
+	zip -r dist/$(UUID).shell-extension.zip \
+		backends/ \
+		lib/ \
+		schemas/ \
+		extension.js \
+		prefs.js \
+		stylesheet.css \
+		metadata.json
 
 # Compile GSettings schema (required before enabling the extension)
 schema:

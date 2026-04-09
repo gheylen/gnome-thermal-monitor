@@ -24,7 +24,6 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
-      - run: glib-compile-schemas --strict schemas/
       - run: make pack
 
       - name: Create GitHub Release
