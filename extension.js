@@ -16,10 +16,9 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {Confidence, CONF_SEVERITY, CONF_BADGE, CONF_COLOR} from './lib/confidence.js';
+import {Confidence, CONF_SEVERITY, CONF_BADGE, CONF_STYLE_CLASS} from './lib/confidence.js';
 import {BACKENDS, CATEGORY_WARNINGS} from './backends/index.js';
 
-const SCHEMA_ID        = 'org.gnome.shell.extensions.thermal-throttle-monitor';
 const THROTTLE_LINGER_S = 30;
 
 // ─── Panel indicator ──────────────────────────────────────────────────────────
@@ -56,11 +55,12 @@ class ThermalIndicator extends PanelMenu.Button {
         this._pollTimer    = null;
         this._settingsConn = null;
 
-        // Panel label.
+        // Panel label — layout via stylesheet.css; colour via per-level CSS class.
         this._label = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
-            style: 'font-size: 11px; padding: 0 6px;',
+            style_class: 'ttm-label ttm-unknown',
         });
+        this._labelClass = 'ttm-unknown';
         this.add_child(this._label);
 
         // Popup menu — one section per discovered component.
@@ -92,6 +92,7 @@ class ThermalIndicator extends PanelMenu.Button {
     }
 
     _updateSection(id, conf) {
+        if (!this._sections) return;
         const s = this._sections[id];
         if (!s) return;
         s.statusItem.label.text = `${CONF_BADGE[conf.level]}   ${conf.line1}`;
@@ -105,10 +106,10 @@ class ThermalIndicator extends PanelMenu.Button {
             GLib.source_remove(this._pollTimer);
             this._pollTimer = null;
         }
-        const interval = this._settings.get_int('poll-interval');
+        this._pollIntervalMs = this._settings.get_int('poll-interval') * 1000;
         this._update();
         this._pollTimer = GLib.timeout_add_seconds(
-            GLib.PRIORITY_DEFAULT, interval,
+            GLib.PRIORITY_DEFAULT, this._pollIntervalMs / 1000,
             () => { this._update(); return GLib.SOURCE_CONTINUE; }
         );
     }
@@ -124,9 +125,12 @@ class ThermalIndicator extends PanelMenu.Button {
     }
 
     _doUpdate() {
-        const pollMs   = this._settings.get_int('poll-interval') * 1000;
-        const tempWarn = this._settings.get_int('temp-warn');
-        const tempCrit = this._settings.get_int('temp-crit');
+        const pollMs = this._pollIntervalMs;
+        // Normalise: ensure warn < crit regardless of how the user set them.
+        const raw0   = this._settings.get_int('temp-warn');
+        const raw1   = this._settings.get_int('temp-crit');
+        const tempWarn = Math.min(raw0, raw1);
+        const tempCrit = Math.max(raw0, raw1);
         const context  = {cpuTempC: null, pollMs, tempWarn, tempCrit};
 
         // Pass 1: read all states; let each component enrich shared context.
@@ -165,9 +169,12 @@ class ThermalIndicator extends PanelMenu.Button {
                              panelLevel === Confidence.HIGH) ? '⚠ ' : '● ';
         const panelSuffix = confs.find(c => c.panelSuffix)?.panelSuffix ?? '';
 
-        this._label.set_style(
-            `font-size: 11px; padding: 0 6px; color: ${CONF_COLOR[panelLevel]};`
-        );
+        const newClass = CONF_STYLE_CLASS[panelLevel];
+        if (newClass !== this._labelClass) {
+            this._label.remove_style_class_name(this._labelClass);
+            this._label.add_style_class_name(newClass);
+            this._labelClass = newClass;
+        }
         this._label.set_text(`${icon}${tempStr}${panelSuffix}`);
 
         // Update popup menu sections.
@@ -208,8 +215,8 @@ class ThermalIndicator extends PanelMenu.Button {
             GLib.source_remove(this._lingerTimer);
             this._lingerTimer = null;
         }
-        this._sections = null;
         super.destroy();
+        this._sections = null;
     }
 });
 
@@ -217,8 +224,14 @@ class ThermalIndicator extends PanelMenu.Button {
 
 export default class ThermalThrottleMonitor extends Extension {
     enable() {
-        this._indicator = new ThermalIndicator(this.getSettings(SCHEMA_ID));
-        Main.panel.addToStatusArea(this.uuid, this._indicator);
+        try {
+            this._indicator = new ThermalIndicator(this.getSettings());
+            Main.panel.addToStatusArea(this.uuid, this._indicator);
+        } catch (e) {
+            console.error('[ThermalThrottleMonitor] Failed to enable:', e);
+            this._indicator?.destroy();
+            this._indicator = null;
+        }
     }
 
     disable() {

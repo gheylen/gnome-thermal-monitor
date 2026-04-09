@@ -26,8 +26,7 @@
 //
 //     calcConf(state, prevState, context): Conf,
 //       Compute confidence.  prevState is the previous poll's readState()
-//       result (null on the very first poll is impossible — the core seeds
-//       prevState from a readState() call at construction time).
+//       result (null on the very first poll — handle gracefully).
 //       Returns: { level, line1, line2, panelSuffix? }
 //         level:       Confidence constant from lib/confidence.js
 //         line1:       first popup line  (badge row)
@@ -72,5 +71,6 @@ export const CATEGORY_WARNINGS = {
     cpu:  'CPU thermal data unavailable — check that coretemp is loaded ' +
           'and /sys/devices/system/cpu/cpu0/thermal_throttle/ exists',
     igpu: 'No supported iGPU found (xe or i915 driver required)',
-    npu:  'No Intel NPU found — NPU monitoring unavailable',
+    // npu is intentionally absent: it is optional Intel-specific hardware;
+    // non-Intel systems should not see a warning for a missing NPU.
 };

@@ -1,0 +1,39 @@
+/* Thermal Throttle Monitor — panel indicator styles.
+ *
+ * Colour is applied via per-confidence CSS classes so GNOME Shell
+ * themes can override individual levels without touching extension code.
+ *
+ * Alert colours (#d61f2d, #cd9309) are the same values GNOME Shell
+ * itself uses for error and warning states (gnome-shell-dark.css).
+ *
+ * LOW, IDLE, and UNKNOWN use 'color: inherit' — the indicator blends
+ * with the panel's own foreground colour when there is nothing to
+ * report, matching the appearance of every other panel item.
+ *
+ * GNOME Shell 49 does not expose semantic colours as CSS custom
+ * properties accessible to extensions, so -st-accent-color is not
+ * used here (it is the user's brand accent, not a warning signal).
+ */
+
+.ttm-label {
+    font-size: 11px;
+    padding: 0 6px;
+}
+
+/* Active throttle — matches GNOME Shell's own error/destructive colour. */
+.ttm-confirmed,
+.ttm-high {
+    color: #d61f2d;
+}
+
+/* Approaching limit — matches GNOME Shell's own warning colour. */
+.ttm-medium {
+    color: #cd9309;
+}
+
+/* Nominal / idle / no data — inherit panel foreground; looks native. */
+.ttm-low,
+.ttm-idle,
+.ttm-unknown {
+    color: inherit;
+}

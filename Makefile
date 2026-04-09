@@ -1,6 +1,6 @@
 UUID = thermal-throttle-monitor@glennheylen.com
 
-.PHONY: all pack schema lint clean
+.PHONY: all pack schema lint clean install
 
 all: pack
 
@@ -21,6 +21,12 @@ schema:
 # Run ESLint
 lint:
 	npm run lint
+
+# Symlink the source tree into the user extensions directory (dev workflow).
+# Compiles the schema in-place so the extension can be enabled immediately.
+install: schema
+	mkdir -p $(HOME)/.local/share/gnome-shell/extensions/
+	ln -snf $(CURDIR) $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 
 # Remove build artifacts
 clean:

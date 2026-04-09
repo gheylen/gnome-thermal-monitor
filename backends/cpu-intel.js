@@ -19,10 +19,11 @@ import {Confidence} from '../lib/confidence.js';
 
 function discoverHw() {
     const throttlePaths = [];
-    for (let i = 0; i < 256; i++) {
-        const base = `/sys/devices/system/cpu/cpu${i}/thermal_throttle`;
-        if (readFile(`${base}/core_throttle_total_time_ms`) === null) break;
-        throttlePaths.push(base);
+    for (const entry of listDir('/sys/devices/system/cpu')) {
+        if (!/^cpu\d+$/.test(entry)) continue;
+        const base = `/sys/devices/system/cpu/${entry}/thermal_throttle`;
+        if (readFile(`${base}/core_throttle_total_time_ms`) !== null)
+            throttlePaths.push(base);
     }
 
     // Prefer coretemp hwmon "Package id 0" for the package temperature.
@@ -78,8 +79,9 @@ function calcConf(state, prevState, context) {
 
     const {pollMs, tempWarn, tempCrit} = context;
     const tempStr    = state.tempC !== null ? `${state.tempC}°C` : '?°C';
-    const prevMs     = prevState?.throttleTimeMs ?? state.throttleTimeMs;
-    const timeDelta  = state.throttleTimeMs - prevMs;
+    const prevMs    = prevState?.throttleTimeMs ?? state.throttleTimeMs;
+    // Clamp to 0: a negative delta means the counter reset (e.g. suspend/resume).
+    const timeDelta = Math.max(0, state.throttleTimeMs - prevMs);
 
     if (timeDelta > 0) {
         const pct = pollMs > 0 ? Math.min(Math.round(timeDelta * 100 / pollMs), 100) : 0;

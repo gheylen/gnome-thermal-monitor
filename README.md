@@ -11,9 +11,9 @@ just temperature. Ships with Intel support out of the box; extensible for any ha
 **Panel indicator** (three states):
 
 ```
-● 72°C          ← green   — all nominal
-● 89°C          ← orange  — approaching throttle threshold
-⚠ 92°C 40%     ← red     — CPU thermally throttled 40% of the last 10 s
+● 72°C          ← panel colour  — all nominal
+● 89°C          ← orange        — approaching throttle threshold
+⚠ 92°C 40%     ← red           — CPU thermally throttled 40% of the last 10 s
 ```
 
 **Popup detail** (click to expand):
@@ -35,6 +35,12 @@ just temperature. Ships with Intel support out of the box; extensible for any ha
 █░░░ LOW         NPU  active
   950 / 1950 MHz (48%) — thermal unconfirmed
 ```
+
+The indicator adopts the panel's own foreground colour when there is nothing to report,
+so it blends naturally with any GNOME Shell theme. Alert colours use the same values
+GNOME Shell itself uses for error and warning states and can be overridden per-level
+via the CSS classes in `stylesheet.css` (`.ttm-confirmed`, `.ttm-high`, `.ttm-medium`,
+`.ttm-low`, `.ttm-idle`, `.ttm-unknown`).
 
 ---
 
@@ -97,15 +103,11 @@ Extensions application.
 git clone https://github.com/gheylen/gnome-thermal-monitor
 cd gnome-thermal-monitor
 
-# Compile the GSettings schema (required once, and after editing schemas/*.gschema.xml)
-glib-compile-schemas schemas/
-
-# Symlink into the extensions directory
-UUID="thermal-throttle-monitor@glennheylen.com"
-ln -sfn "$PWD" "$HOME/.local/share/gnome-shell/extensions/$UUID"
+# Compile schema and symlink into the extensions directory in one step
+make install
 
 # Log out and back in (Wayland requires a full shell restart)
-gnome-extensions enable "$UUID"
+gnome-extensions enable thermal-throttle-monitor@glennheylen.com
 ```
 
 ---
@@ -231,6 +233,26 @@ When reporting an issue, include:
 - GNOME Shell version: `gnome-shell --version`
 - CPU model: `grep "model name" /proc/cpuinfo | head -1`
 - Startup log: `journalctl -b /usr/bin/gnome-shell | grep ThermalThrottleMonitor`
+
+**Development workflow:**
+
+```bash
+make install   # compile schema + symlink into extensions dir (run once)
+make lint      # run ESLint
+make pack      # build distributable zip → dist/*.shell-extension.zip
+make clean     # remove build artifacts
+```
+
+**Releasing a new version:**
+
+1. Bump `"version"` in `metadata.json`
+2. Push a tag matching the version number:
+   ```bash
+   git tag v3
+   git push origin v3
+   ```
+3. GitHub Actions builds the zip, runs lint and schema validation, and
+   publishes a GitHub Release with the zip attached automatically.
 
 ---
 

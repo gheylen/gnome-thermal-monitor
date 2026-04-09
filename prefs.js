@@ -5,19 +5,11 @@ import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 
-// GNOME Shell 49 moved the prefs module to a new resource path.
-// Try the new path first, fall back to the pre-49 path.
-const {ExtensionPreferences} = await import(
-    'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js'
-).catch(() => import(
-    'resource:///org/gnome/shell/extensions/prefs.js'
-));
-
-const SCHEMA_ID = 'org.gnome.shell.extensions.thermal-throttle-monitor';
+import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 export default class ThermalThrottlePreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        const settings = this.getSettings(SCHEMA_ID);
+        const settings = this.getSettings();
 
         const page = new Adw.PreferencesPage({
             title: 'Settings',
@@ -46,7 +38,7 @@ export default class ThermalThrottlePreferences extends ExtensionPreferences {
         // Polling
         const polling = new Adw.PreferencesGroup({
             title: 'Polling',
-            description: 'Changes take effect after disabling and re-enabling the extension.',
+            description: 'Changes take effect immediately.',
         });
         page.add(polling);
 
@@ -64,7 +56,7 @@ export default class ThermalThrottlePreferences extends ExtensionPreferences {
                 lower: min,
                 upper: max,
                 step_increment: 1,
-                value: min,
+                value: settings.get_int(key),
             }),
         });
         settings.bind(key, row, 'value', Gio.SettingsBindFlags.DEFAULT);

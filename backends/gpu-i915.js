@@ -9,6 +9,7 @@
 
 import {readFile, listDir, readDriverName, parseIntSafe} from '../lib/sysfs.js';
 import {Confidence} from '../lib/confidence.js';
+import {calcFreqConf} from '../lib/gpu-common.js';
 
 // ── Discovery ──────────────────────────────────────────────────────────────────
 
@@ -65,23 +66,7 @@ function calcConf(state, _prevState, label, context) {
     if (isIdle)
         return {level: Confidence.IDLE, line1: `iGPU ${label}  idle`, line2: freqStr};
 
-    if (maxFreq !== null && maxFreq < rp0Freq * 0.95) {
-        const packageHot = cpuTempC !== null && cpuTempC >= tempWarn;
-        return {
-            level: packageHot ? Confidence.HIGH : Confidence.MEDIUM,
-            line1: `iGPU ${label}  freq capped`,
-            line2: `${maxFreq}/${rp0Freq} MHz cap${packageHot ? ' — package hot' : ' — reason unknown'}`,
-        };
-    }
-
-    if (curFreq !== null && curFreq < rp0Freq * 0.75)
-        return {
-            level: Confidence.LOW,
-            line1: `iGPU ${label}  below max`,
-            line2: `${freqStr} — P-state or power limit`,
-        };
-
-    return {level: Confidence.LOW, line1: `iGPU ${label}  nominal`, line2: freqStr};
+    return calcFreqConf(label, curFreq, maxFreq, rp0Freq, freqStr, cpuTempC, tempWarn);
 }
 
 // ── Backend export ─────────────────────────────────────────────────────────────

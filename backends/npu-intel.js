@@ -43,11 +43,22 @@ function calcConf(state, prevState, context) {
         ? Math.max(0, state.busyUs - prevBusyUs) : 0;
     const isActive   = state.curFreq > 0;
 
-    if (!isActive || busyDelta === 0)
+    if (!isActive)
         return {
             level: Confidence.IDLE,
             line1: `NPU  idle`,
             line2: `${state.curFreq} / ${state.maxFreq} MHz`,
+        };
+
+    // NPU running but busy counter unreadable — cannot determine activity level.
+    if (state.busyUs === null)
+        return {level: Confidence.UNKNOWN, line1: 'NPU — no data', line2: ''};
+
+    if (busyDelta === 0)
+        return {
+            level: Confidence.LOW,
+            line1: `NPU  active`,
+            line2: `${state.curFreq} / ${state.maxFreq} MHz — no new work this interval`,
         };
 
     const pct = Math.round(state.curFreq * 100 / state.maxFreq);
