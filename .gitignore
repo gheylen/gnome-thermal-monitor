@@ -16,9 +16,6 @@ yarn-error.log*
 
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store           # macOS
-Thumbs.db           # Windows
-desktop.ini         # Windows
-$RECYCLE.BIN/       # Windows
 
 # ── Editors & IDEs ────────────────────────────────────────────────────────────
 .vscode/            # VS Code
@@ -36,3 +33,6 @@ $RECYCLE.BIN/       # Windows
 .#*                 # Emacs lock files
 *.orig              # Merge conflict originals
 *.bak
+
+# ── AI assistant tooling ──────────────────────────────────────────────────────
+.claude/            # Claude Code local settings (per-developer, not shared)
