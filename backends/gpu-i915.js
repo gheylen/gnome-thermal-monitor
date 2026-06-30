@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Intel HD / Iris / UHD iGPU backend (i915 kernel driver).
 //
 // Fallback for pre-Arc Intel GPUs.  Handles two sysfs layouts:

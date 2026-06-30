@@ -1,4 +1,7 @@
-/* Thermal Throttle Monitor — panel indicator styles.
+/* SPDX-FileCopyrightText: 2026 Glenn Heylen
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * Thermal Throttle Monitor — panel indicator styles.
  *
  * Colour is applied via per-confidence CSS classes so GNOME Shell
  * themes can override individual levels without touching extension code.
@@ -10,7 +13,7 @@
  * with the panel's own foreground colour when there is nothing to
  * report, matching the appearance of every other panel item.
  *
- * GNOME Shell 49 does not expose semantic colours as CSS custom
+ * GNOME Shell does not expose semantic colours as CSS custom
  * properties accessible to extensions, so -st-accent-color is not
  * used here (it is the user's brand accent, not a warning signal).
  */

@@ -1,6 +1,6 @@
 UUID = thermal-throttle-monitor@glennheylen.com
 
-.PHONY: all pack schema lint clean install
+.PHONY: all pack schema lint test clean install
 
 all: pack
 
@@ -14,7 +14,8 @@ pack: schema
 		extension.js \
 		prefs.js \
 		stylesheet.css \
-		metadata.json
+		metadata.json \
+		LICENSE
 
 # Compile GSettings schema (required before enabling the extension)
 schema:
@@ -23,6 +24,10 @@ schema:
 # Run ESLint
 lint:
 	npm run lint
+
+# Run unit tests (pure decision logic; no GJS runtime required)
+test:
+	npm test
 
 # Symlink the source tree into the user extensions directory (dev workflow).
 # Compiles the schema in-place so the extension can be enabled immediately.

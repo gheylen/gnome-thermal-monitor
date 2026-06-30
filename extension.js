@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Thermal Throttle Monitor — GNOME Shell extension
 //
 // Colour-coded panel indicator for Intel CPU / iGPU / NPU thermal throttle
@@ -106,10 +109,11 @@ class ThermalIndicator extends PanelMenu.Button {
             GLib.source_remove(this._pollTimer);
             this._pollTimer = null;
         }
-        this._pollIntervalMs = this._settings.get_int('poll-interval') * 1000;
+        const intervalSec = this._settings.get_int('poll-interval');
+        this._pollIntervalMs = intervalSec * 1000; // exposed to backends via context.pollMs
         this._update();
         this._pollTimer = GLib.timeout_add_seconds(
-            GLib.PRIORITY_DEFAULT, this._pollIntervalMs / 1000,
+            GLib.PRIORITY_DEFAULT, intervalSec,
             () => { this._update(); return GLib.SOURCE_CONTINUE; }
         );
     }

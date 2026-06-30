@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Preferences UI for Thermal Throttle Monitor
 // Rendered inside the GNOME Extensions application.
 

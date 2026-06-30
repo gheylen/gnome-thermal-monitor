@@ -239,17 +239,22 @@ When reporting an issue, include:
 ```bash
 make install   # compile schema + symlink into extensions dir (run once)
 make lint      # run ESLint
+make test      # run unit tests (node --test)
 make pack      # build distributable zip → dist/*.shell-extension.zip
 make clean     # remove build artifacts
 ```
+
+Unit tests cover the pure decision logic (`lib/confidence.js`, `lib/gpu-common.js`),
+which is independent of the GJS runtime and runs under plain Node. The hardware
+backends read live sysfs and are validated against real hardware.
 
 **Releasing a new version:**
 
 1. Bump `"version"` in `metadata.json`
 2. Push a tag matching the version number:
    ```bash
-   git tag v3
-   git push origin v3
+   git tag v4
+   git push origin v4
    ```
 3. GitHub Actions builds the zip, runs lint and schema validation, and
    publishes a GitHub Release with the zip attached automatically.

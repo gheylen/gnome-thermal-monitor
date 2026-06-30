@@ -1,8 +1,13 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Intel CPU thermal throttle backend.
 //
 // Primary signal: core_throttle_total_time_ms — a per-core kernel counter that
 // increments only on hardware PROCHOT interrupts.  Summed across all cores and
-// diffed against the previous poll, it gives an exact throttle duty-cycle.
+// diffed against the previous poll, then divided by the poll window to estimate
+// a throttle duty-cycle.  This is an aggregate across cores (saturated at 100%),
+// not a wall-clock figure: any throttling in the interval registers as a signal.
 //
 // Temperature: coretemp hwmon "Package id 0" (preferred) or the x86_pkg_temp
 // thermal zone (fallback).

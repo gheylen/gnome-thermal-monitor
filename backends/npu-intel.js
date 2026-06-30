@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Intel NPU (VPU) backend — Core Ultra (Meteor Lake) and later.
 //
 // Identified by the npu_* sysfs attributes under /sys/class/accel/accel*/device/.

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Backend registry — the only file to touch when adding hardware support.
 //
 // ─── Adding a new backend ────────────────────────────────────────────────────

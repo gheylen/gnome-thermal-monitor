@@ -1,9 +1,19 @@
 {
   "name": "thermal-throttle-monitor",
+  "version": "4.0.0",
+  "description": "GNOME Shell extension: colour-coded panel indicator for CPU, iGPU, and NPU thermal throttle state, read from kernel hardware counters.",
+  "author": "Glenn Heylen",
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://github.com/gheylen/gnome-thermal-monitor",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gheylen/gnome-thermal-monitor.git"
+  },
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test test/*.test.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

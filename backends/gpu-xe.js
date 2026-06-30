@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Glenn Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // Intel Arc / Xe iGPU backend (xe kernel driver).
 //
 // Discovers one component per GT (Graphics Tile).  Lunar Lake and Meteor Lake
