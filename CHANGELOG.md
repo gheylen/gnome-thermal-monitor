@@ -12,19 +12,30 @@ extensions.gnome.org.
 
 ### Added
 - GNOME Shell **50** support.
+- **AMD CPU backend** (experimental, `k10temp`) — temperature only; AMD exposes
+  no confirmed-throttle counter, so it caps at HIGH. Not yet validated on
+  hardware.
+- **Hide-when-nominal** setting — hide the indicator while nothing is throttling.
+- **Notify-on-throttle** setting — desktop notification on a confirmed throttle
+  event (edge-triggered, so it fires once per burst). Both settings default off.
 - `LICENSE` file (GPL-2.0-or-later) — the license was declared but not shipped.
 - SPDX license headers on every source file.
-- Unit tests (`node --test`) for the pure decision logic
-  (`lib/confidence.js`, `lib/gpu-common.js`), wired into CI and releases.
+- Unit tests (`node --test`) for all pure decision logic — CPU, xe/i915 iGPU,
+  NPU confidence modules, the freq-cap helper, and the panel-policy helpers —
+  wired into CI and releases.
 - Community-health files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
   `SECURITY.md`, issue/PR templates.
 - Supply-chain hardening: CodeQL code scanning, Dependabot, and
   SHA-pinned GitHub Actions.
 
 ### Changed
+- **CPU throttle display now shows how many cores are throttling** (`(3)` in the
+  panel, "3 of 16 cores throttling" in the popup) instead of a cross-core
+  percentage that could saturate to a misleading 100%.
+- Refactored each backend's confidence logic into pure, runtime-independent
+  `lib/conf-*.js` modules so it can be unit-tested without the GJS runtime.
+  No behaviour change to the Intel backends.
 - Simplified the poll-interval handling in `extension.js` (no behaviour change).
-- Clarified the CPU duty-cycle documentation (it is a saturating cross-core
-  aggregate, not an exact wall-clock figure).
 
 ## [3] — 2026-04-09
 

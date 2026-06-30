@@ -4,21 +4,20 @@
 // Intel CPU thermal throttle backend.
 //
 // Primary signal: core_throttle_total_time_ms — a per-core kernel counter that
-// increments only on hardware PROCHOT interrupts.  Summed across all cores and
-// diffed against the previous poll, then divided by the poll window to estimate
-// a throttle duty-cycle.  This is an aggregate across cores (saturated at 100%),
-// not a wall-clock figure: any throttling in the interval registers as a signal.
+// increments only on hardware PROCHOT interrupts.  readState reads one counter
+// per core; lib/conf-cpu.js diffs them against the previous poll and reports how
+// many cores throttled in the interval (a definitive, hardware-confirmed event).
 //
 // Temperature: coretemp hwmon "Package id 0" (preferred) or the x86_pkg_temp
 // thermal zone (fallback).
 //
-// Confidence: CONFIRMED when the PROCHOT counter advanced; HIGH / MEDIUM / LOW
-// based on temperature when no interrupt fired.
+// Confidence: CONFIRMED when one or more cores' PROCHOT counters advanced;
+// HIGH / MEDIUM / LOW based on temperature when no core throttled.
 //
 // Contributes context.cpuTempC so GPU and NPU backends can infer thermal cause.
 
 import {readFile, listDir, parseIntSafe} from '../lib/sysfs.js';
-import {Confidence} from '../lib/confidence.js';
+import {cpuConf} from '../lib/conf-cpu.js';
 
 // ── Discovery ──────────────────────────────────────────────────────────────────
 
@@ -63,61 +62,21 @@ function discoverHw() {
 // ── State reader ───────────────────────────────────────────────────────────────
 
 function readState(hw) {
-    let throttleTimeMs = 0;
-    for (const base of hw.throttlePaths) {
-        const v = parseIntSafe(readFile(`${base}/core_throttle_total_time_ms`));
-        if (v !== null) throttleTimeMs += v;
-    }
+    // One counter per core; null for any core whose counter can't be read.
+    // The array length is stable across polls (paths are fixed at discovery),
+    // so conf-cpu can compare cores by index.
+    const throttleTimes = hw.throttlePaths.map(
+        base => parseIntSafe(readFile(`${base}/core_throttle_total_time_ms`))
+    );
     let tempC = null;
     if (hw.tempSensor) {
         const raw = parseIntSafe(readFile(hw.tempSensor.path));
         tempC = raw !== null ? Math.round(raw / 1000) : null;
     }
-    return {throttleTimeMs, tempC};
+    return {throttleTimes, tempC};
 }
 
-// ── Confidence calculator ──────────────────────────────────────────────────────
-
-function calcConf(state, prevState, context) {
-    if (!state)
-        return {level: Confidence.UNKNOWN, line1: 'CPU — no data', line2: ''};
-
-    const {pollMs, tempWarn, tempCrit} = context;
-    const tempStr    = state.tempC !== null ? `${state.tempC}°C` : '?°C';
-    const prevMs    = prevState?.throttleTimeMs ?? state.throttleTimeMs;
-    // Clamp to 0: a negative delta means the counter reset (e.g. suspend/resume).
-    const timeDelta = Math.max(0, state.throttleTimeMs - prevMs);
-
-    if (timeDelta > 0) {
-        const pct = pollMs > 0 ? Math.min(Math.round(timeDelta * 100 / pollMs), 100) : 0;
-        return {
-            level:       Confidence.CONFIRMED,
-            line1:       `CPU Package  ${tempStr}`,
-            line2:       `Throttled ${pct}% of last poll — PROCHOT`,
-            panelSuffix: ` ${pct}%`,
-        };
-    }
-
-    if (state.tempC !== null && state.tempC >= tempCrit)
-        return {
-            level: Confidence.HIGH,
-            line1: `CPU Package  ${tempStr}`,
-            line2: `At critical threshold — throttle imminent`,
-        };
-
-    if (state.tempC !== null && state.tempC >= tempWarn)
-        return {
-            level: Confidence.MEDIUM,
-            line1: `CPU Package  ${tempStr}`,
-            line2: `Elevated — approaching throttle`,
-        };
-
-    return {
-        level: Confidence.LOW,
-        line1: `CPU Package  ${tempStr}`,
-        line2: `Nominal`,
-    };
-}
+// Confidence logic lives in lib/conf-cpu.js (pure, unit-tested).
 
 // ── Backend export ─────────────────────────────────────────────────────────────
 
@@ -132,7 +91,7 @@ export default {
             id:           'cpu',
             sectionTitle: 'CPU',
             readState:          () => readState(hw),
-            calcConf:           (state, prevState, ctx) => calcConf(state, prevState, ctx),
+            calcConf:           (state, prevState, ctx) => cpuConf(state, prevState, ctx),
             contributeContext:  (state, ctx) => { ctx.cpuTempC = state?.tempC ?? null; },
         }];
     },

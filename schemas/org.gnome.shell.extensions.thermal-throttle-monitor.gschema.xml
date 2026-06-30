@@ -23,5 +23,17 @@
       <description>How often to read thermal sensors and throttle counters.</description>
     </key>
 
+    <key name="hide-when-nominal" type="b">
+      <default>false</default>
+      <summary>Hide the indicator when nothing is throttling</summary>
+      <description>When enabled, the panel indicator is hidden while all components are nominal, and reappears on a warning or confirmed throttle event.</description>
+    </key>
+
+    <key name="notify-on-throttle" type="b">
+      <default>false</default>
+      <summary>Send a notification on confirmed throttling</summary>
+      <description>When enabled, a desktop notification is shown when a confirmed thermal throttle event begins.</description>
+    </key>
+
   </schema>
 </schemalist>

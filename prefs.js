@@ -49,6 +49,26 @@ export default class ThermalThrottlePreferences extends ExtensionPreferences {
             'Poll Interval (seconds)',
             'How often to read thermal sensors and throttle counters',
             1, 60);
+
+        // Behaviour
+        const behaviour = new Adw.PreferencesGroup({
+            title: 'Behaviour',
+        });
+        page.add(behaviour);
+
+        this._switchRow(behaviour, settings, 'hide-when-nominal',
+            'Hide when nominal',
+            'Hide the indicator while nothing is throttling; show it on warnings or throttling');
+
+        this._switchRow(behaviour, settings, 'notify-on-throttle',
+            'Notify on throttling',
+            'Show a desktop notification when a confirmed throttle event begins');
+    }
+
+    _switchRow(group, settings, key, title, subtitle) {
+        const row = new Adw.SwitchRow({title, subtitle});
+        settings.bind(key, row, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(row);
     }
 
     _spinRow(group, settings, key, title, subtitle, min, max) {

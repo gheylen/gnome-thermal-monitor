@@ -20,6 +20,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {Confidence, CONF_SEVERITY, CONF_BADGE, CONF_STYLE_CLASS} from './lib/confidence.js';
+import {isNominalLevel, crossedIntoThrottle} from './lib/panel-policy.js';
 import {BACKENDS, CATEGORY_WARNINGS} from './backends/index.js';
 
 const THROTTLE_LINGER_S = 30;
@@ -53,10 +54,11 @@ class ThermalIndicator extends PanelMenu.Button {
         for (const entry of this._entries)
             entry.prevState = entry.component.readState();
 
-        this._lingerActive = false;
-        this._lingerTimer  = null;
-        this._pollTimer    = null;
-        this._settingsConn = null;
+        this._lingerActive  = false;
+        this._lingerTimer   = null;
+        this._pollTimer     = null;
+        this._settingsConn  = null;
+        this._prevPanelLevel = null; // for edge-triggered throttle notifications
 
         // Panel label — layout via stylesheet.css; colour via per-level CSS class.
         this._label = new St.Label({
@@ -167,7 +169,7 @@ class ThermalIndicator extends PanelMenu.Button {
 
         // Panel label: <icon><temp>[<suffix>]
         // context.cpuTempC is populated by the CPU backend's contributeContext.
-        // panelSuffix (e.g. ' 40%') is an optional field on a conf object.
+        // panelSuffix (e.g. ' (3)' for 3 throttling cores) is optional on a conf.
         const tempStr     = context.cpuTempC !== null ? `${context.cpuTempC}°C` : '?°C';
         const icon        = (panelLevel === Confidence.CONFIRMED ||
                              panelLevel === Confidence.HIGH) ? '⚠ ' : '● ';
@@ -185,6 +187,18 @@ class ThermalIndicator extends PanelMenu.Button {
         this._entries.forEach(({component}, i) =>
             this._updateSection(component.id, confs[i])
         );
+
+        // Behaviour settings.
+        if (this._settings.get_boolean('notify-on-throttle') &&
+            crossedIntoThrottle(panelLevel, this._prevPanelLevel))
+            this._notifyThrottle(confs);
+        this._prevPanelLevel = panelLevel;
+
+        // Hide-when-nominal: keep the indicator out of the panel while calm.
+        // The panel parents the button's container, so toggle that (not `this`)
+        // to collapse cleanly without leaving a gap.
+        this.container.visible = !(this._settings.get_boolean('hide-when-nominal') &&
+                                   isNominalLevel(panelLevel));
     }
 
     // ── Linger timer ───────────────────────────────────────────────────────
@@ -202,6 +216,16 @@ class ThermalIndicator extends PanelMenu.Button {
                 return GLib.SOURCE_REMOVE;
             }
         );
+    }
+
+    // ── Notifications ──────────────────────────────────────────────────────
+
+    _notifyThrottle(confs) {
+        const hit = confs.find(c => c.level === Confidence.CONFIRMED);
+        const detail = hit
+            ? `${hit.line1.trim()} — ${hit.line2}`
+            : 'A component is thermally throttling.';
+        Main.notify('Thermal throttling detected', detail);
     }
 
     // ── Cleanup ────────────────────────────────────────────────────────────

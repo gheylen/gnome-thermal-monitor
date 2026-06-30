@@ -11,8 +11,7 @@
 // inferred from the CPU package temperature (same logic as the xe backend).
 
 import {readFile, listDir, readDriverName, parseIntSafe} from '../lib/sysfs.js';
-import {Confidence} from '../lib/confidence.js';
-import {calcFreqConf} from '../lib/gpu-common.js';
+import {gpuI915Conf} from '../lib/conf-gpu-i915.js';
 
 // ── Discovery ──────────────────────────────────────────────────────────────────
 
@@ -56,21 +55,7 @@ function readState(gt) {
     return {curFreq, maxFreq, rp0Freq, isIdle};
 }
 
-// ── Confidence calculator ──────────────────────────────────────────────────────
-
-function calcConf(state, _prevState, label, context) {
-    if (!state || state.rp0Freq === null)
-        return {level: Confidence.UNKNOWN, line1: `iGPU ${label} — no data`, line2: ''};
-
-    const {curFreq, maxFreq, rp0Freq, isIdle} = state;
-    const {cpuTempC, tempWarn} = context;
-    const freqStr = `${curFreq ?? '?'} / ${rp0Freq} MHz`;
-
-    if (isIdle)
-        return {level: Confidence.IDLE, line1: `iGPU ${label}  idle`, line2: freqStr};
-
-    return calcFreqConf(label, curFreq, maxFreq, rp0Freq, freqStr, cpuTempC, tempWarn);
-}
+// Confidence logic lives in lib/conf-gpu-i915.js (pure, unit-tested).
 
 // ── Backend export ─────────────────────────────────────────────────────────────
 
@@ -84,7 +69,7 @@ export default {
             id:           `gpu-i915-${i}`,
             sectionTitle: `iGPU — ${gt.label}`,
             readState:    () => readState(gt),
-            calcConf:     (state, prevState, ctx) => calcConf(state, prevState, gt.label, ctx),
+            calcConf:     (state, _prevState, ctx) => gpuI915Conf(state, gt.label, ctx),
         }));
     },
 };

@@ -13,8 +13,7 @@
 // inferred from the CPU package temperature.
 
 import {readFile, listDir, readDriverName, parseIntSafe} from '../lib/sysfs.js';
-import {Confidence} from '../lib/confidence.js';
-import {calcFreqConf} from '../lib/gpu-common.js';
+import {gpuXeConf} from '../lib/conf-gpu-xe.js';
 
 // ── Discovery ──────────────────────────────────────────────────────────────────
 
@@ -57,46 +56,7 @@ function readState(gt) {
     return {actFreq, curFreq, maxFreq, rp0Freq, isIdle, throttleStatus, reasonThermal, reasonProchot, reasons};
 }
 
-// ── Confidence calculator ──────────────────────────────────────────────────────
-
-function calcConf(state, _prevState, label, context) {
-    if (!state || state.rp0Freq === null)
-        return {level: Confidence.UNKNOWN, line1: `iGPU ${label} — no data`, line2: ''};
-
-    const {curFreq, maxFreq, rp0Freq, isIdle, throttleStatus, reasonThermal, reasonProchot, reasons} = state;
-    const {cpuTempC, tempWarn} = context;
-    const freqStr = `${curFreq ?? '?'} / ${rp0Freq} MHz`;
-
-    if (isIdle)
-        return {level: Confidence.IDLE, line1: `iGPU ${label}  idle`, line2: freqStr};
-
-    // Direct xe throttle signals from freq0/throttle/.
-    if (reasonProchot === 1)
-        return {
-            level: Confidence.CONFIRMED,
-            line1: `iGPU ${label}  throttled`,
-            line2: `${freqStr} — PROCHOT`,
-        };
-
-    if (reasonThermal === 1)
-        return {
-            level: Confidence.HIGH,
-            line1: `iGPU ${label}  throttled`,
-            line2: `${freqStr} — thermal`,
-        };
-
-    if (throttleStatus === 1) {
-        const reasonStr = (reasons && reasons !== 'none') ? reasons : 'unknown';
-        return {
-            level: Confidence.MEDIUM,
-            line1: `iGPU ${label}  throttled`,
-            line2: `${freqStr} — ${reasonStr}`,
-        };
-    }
-
-    // Hard cap without an active throttle register: driver-side limit or stale cap.
-    return calcFreqConf(label, curFreq, maxFreq, rp0Freq, freqStr, cpuTempC, tempWarn);
-}
+// Confidence logic lives in lib/conf-gpu-xe.js (pure, unit-tested).
 
 // ── Backend export ─────────────────────────────────────────────────────────────
 
@@ -110,7 +70,7 @@ export default {
             id:           `gpu-xe-${i}`,
             sectionTitle: `iGPU — ${gt.label}`,
             readState:    () => readState(gt),
-            calcConf:     (state, prevState, ctx) => calcConf(state, prevState, gt.label, ctx),
+            calcConf:     (state, _prevState, ctx) => gpuXeConf(state, gt.label, ctx),
         }));
     },
 };

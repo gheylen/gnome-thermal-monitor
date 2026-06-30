@@ -35,7 +35,7 @@
 //         line1:       first popup line  (badge row)
 //         line2:       second popup line (detail row; '' to hide)
 //         panelSuffix: optional string appended to the top-bar label
-//                      (e.g. ' 40%' for CPU throttle duty-cycle)
+//                      (e.g. ' (3)' for 3 throttling CPU cores)
 //
 //     contributeContext?(state, context): void,   [optional]
 //       Called in pass 1 (before any calcConf).  Populate shared fields on
@@ -55,14 +55,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import IntelCpu    from './cpu-intel.js';
+import AmdCpu      from './cpu-amd.js';
 import IntelXeGpu  from './gpu-xe.js';
 import IntelI915Gpu from './gpu-i915.js';
 import IntelNpu    from './npu-intel.js';
 
 // Backends are tried in order.  Multiple backends in the same category can
 // coexist — e.g. a system with both an xe dGPU and an i915 iGPU shows both.
+// Intel and AMD CPU backends are mutually exclusive in practice (each only
+// discovers its own vendor's sysfs), so listing both is safe.
 export const BACKENDS = [
     IntelCpu,
+    AmdCpu,
     IntelXeGpu,
     IntelI915Gpu,
     IntelNpu,
@@ -71,8 +75,8 @@ export const BACKENDS = [
 // One warning fires per category when no backend in that category finds hardware.
 // Add an entry here when introducing a new hardware category.
 export const CATEGORY_WARNINGS = {
-    cpu:  'CPU thermal data unavailable — check that coretemp is loaded ' +
-          'and /sys/devices/system/cpu/cpu0/thermal_throttle/ exists',
+    cpu:  'CPU thermal data unavailable — check that coretemp (Intel) or ' +
+          'k10temp (AMD) is loaded',
     igpu: 'No supported iGPU found (xe or i915 driver required)',
     // npu is intentionally absent: it is optional Intel-specific hardware;
     // non-Intel systems should not see a warning for a missing NPU.

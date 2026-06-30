@@ -23,7 +23,7 @@ just temperature. Ships with Intel support out of the box; extensible for any ha
 ```
 ● 72°C          ← panel colour  — all nominal
 ● 89°C          ← orange        — approaching throttle threshold
-⚠ 92°C 40%     ← red           — CPU thermally throttled 40% of the last 10 s
+⚠ 92°C (3)     ← red           — 3 CPU cores thermally throttling
 ```
 
 **Popup detail** (click to expand):
@@ -31,7 +31,7 @@ just temperature. Ships with Intel support out of the box; extensible for any ha
 ```
 ────── CPU ──────────────────────────────────────
 ████ CONFIRMED   CPU Package  92°C
-  Throttled 40% of last poll — PROCHOT
+  3 of 16 cores throttling — PROCHOT
 
 ────── iGPU — Render ────────────────────────────
 ░░░░ IDLE        iGPU Render  idle
@@ -95,6 +95,7 @@ about certainty:
 | Intel CPU | `thermal_throttle` sysfs entries — Haswell / 4th gen and later |
 | Intel iGPU | `xe` driver (Arc / Xe) or `i915` driver (HD / Iris / UHD) |
 | Intel NPU | Core Ultra (Meteor Lake and later), kernel 6.8+ |
+| AMD CPU *(experimental)* | `k10temp` driver — temperature only (AMD has no confirmed-throttle counter), not yet validated on hardware |
 
 Other hardware (AMD, NVIDIA, ARM…) is supported via custom backends — see [Adding hardware support](#adding-hardware-support).
 
@@ -131,6 +132,8 @@ Open **GNOME Extensions** → ⚙ next to *Thermal Throttle Monitor*:
 | Warning temperature | 88 °C | Panel turns orange above this package temperature |
 | Critical temperature | 94 °C | Panel turns red; throttling imminent |
 | Poll interval | 10 s | How often sensors and counters are read |
+| Hide when nominal | off | Hide the indicator while nothing is throttling; it reappears on a warning or confirmed throttle |
+| Notify on throttling | off | Show a desktop notification when a confirmed throttle event begins |
 
 The colour thresholds apply when no confirmed throttle event has been observed. Once
 the CPU throttle counter increments, the panel turns red regardless of these settings
