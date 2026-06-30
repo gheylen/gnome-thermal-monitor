@@ -1,5 +1,10 @@
 # Thermal Throttle Monitor
 
+[![CI](https://github.com/gheylen/gnome-thermal-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/gheylen/gnome-thermal-monitor/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/gheylen/gnome-thermal-monitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/gheylen/gnome-thermal-monitor/actions/workflows/codeql.yml)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](LICENSE)
+![GNOME Shell 45–50](https://img.shields.io/badge/GNOME%20Shell-45–50-4A86CF?logo=gnome&logoColor=white)
+
 A GNOME Shell extension that shows CPU, iGPU, and NPU thermal throttle state as a
 colour-coded indicator in the top bar — using the kernel's own hardware counters, not
 just temperature. Ships with Intel support out of the box; extensible for any hardware.
@@ -7,6 +12,11 @@ just temperature. Ships with Intel support out of the box; extensible for any ha
 ---
 
 ## What it looks like
+
+<!-- A real screenshot is preferred over the diagram below. Capture the panel
+     indicator + open popup, save it to assets/screenshot.png, and uncomment:
+![Thermal Throttle Monitor panel indicator and popup](assets/screenshot.png)
+-->
 
 **Panel indicator** (three states):
 

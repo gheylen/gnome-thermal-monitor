@@ -1,0 +1,62 @@
+name: Bug report
+description: Report something that isn't working correctly
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. The diagnostic commands
+        below are the single biggest help in resolving issues quickly.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: input
+    id: shell-version
+    attributes:
+      label: GNOME Shell version
+      description: "Output of: gnome-shell --version"
+      placeholder: "GNOME Shell 50.2"
+    validations:
+      required: true
+
+  - type: input
+    id: cpu-model
+    attributes:
+      label: CPU model
+      description: 'Output of: grep "model name" /proc/cpuinfo | head -1'
+      placeholder: "Intel(R) Core(TM) Ultra 7 256V"
+    validations:
+      required: true
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      description: "The 'version' field in metadata.json (or the EGO version)."
+      placeholder: "4"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Startup log
+      description: "Output of: journalctl -b /usr/bin/gnome-shell | grep ThermalThrottleMonitor"
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: session
+    attributes:
+      label: Session type
+      description: "X11 or Wayland? Output of: echo $XDG_SESSION_TYPE"
+      placeholder: "wayland"
+    validations:
+      required: false
