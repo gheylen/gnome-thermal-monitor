@@ -38,8 +38,9 @@ function discoverHw() {
             const pfx   = f.replace('_label', '');
             const input = `${base}/${pfx}_input`;
             if (readFile(input) === null) continue;
-            byLabel[readFile(`${base}/${f}`)] = input;
             firstInput ??= input;
+            const label = readFile(`${base}/${f}`);
+            if (label !== null) byLabel[label] = input;
         }
         // Some k10temp versions expose no labels — fall back to temp1_input.
         if (firstInput === null && readFile(`${base}/temp1_input`) !== null)

@@ -7,18 +7,21 @@
 
     <key name="temp-warn" type="i">
       <default>88</default>
+      <range min="50" max="105"/>
       <summary>Warning temperature (°C)</summary>
       <description>Panel indicator turns orange above this temperature.</description>
     </key>
 
     <key name="temp-crit" type="i">
       <default>94</default>
+      <range min="50" max="105"/>
       <summary>Critical temperature (°C)</summary>
       <description>Panel indicator turns red; throttling imminent or active.</description>
     </key>
 
     <key name="poll-interval" type="i">
       <default>10</default>
+      <range min="1" max="3600"/>
       <summary>Poll interval (seconds)</summary>
       <description>How often to read thermal sensors and throttle counters.</description>
     </key>

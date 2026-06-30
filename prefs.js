@@ -16,7 +16,6 @@ export default class ThermalThrottlePreferences extends ExtensionPreferences {
 
         const page = new Adw.PreferencesPage({
             title: 'Settings',
-            icon_name: 'temperature-symbolic',
         });
         window.add(page);
 

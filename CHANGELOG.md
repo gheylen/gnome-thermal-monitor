@@ -27,6 +27,8 @@ extensions.gnome.org.
   `SECURITY.md`, issue/PR templates.
 - Supply-chain hardening: CodeQL code scanning, Dependabot, and
   SHA-pinned GitHub Actions.
+- Schema-level `<range>` validation on all settings keys, so an out-of-bounds
+  value set directly via dconf (e.g. `poll-interval` 0) can't busy-loop the shell.
 
 ### Changed
 - **CPU throttle display now shows how many cores are throttling** (`(3)` in the

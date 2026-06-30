@@ -19,7 +19,7 @@ pack: schema
 
 # Compile GSettings schema (required before enabling the extension)
 schema:
-	glib-compile-schemas schemas/
+	glib-compile-schemas --strict schemas/
 
 # Run ESLint
 lint:

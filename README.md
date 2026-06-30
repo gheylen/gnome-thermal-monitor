@@ -194,7 +194,7 @@ export default {
 import MyBackend from './your-backend.js';
 
 export const BACKENDS = [
-    IntelCpu, IntelXeGpu, IntelI915Gpu, IntelNpu,
+    IntelCpu, AmdCpu, IntelXeGpu, IntelI915Gpu, IntelNpu,
     MyBackend,  // ← add here
 ];
 
@@ -257,9 +257,11 @@ make pack      # build distributable zip → dist/*.shell-extension.zip
 make clean     # remove build artifacts
 ```
 
-Unit tests cover the pure decision logic (`lib/confidence.js`, `lib/gpu-common.js`),
-which is independent of the GJS runtime and runs under plain Node. The hardware
-backends read live sysfs and are validated against real hardware.
+Unit tests cover the pure decision logic (the `lib/conf-*.js` confidence modules,
+`lib/gpu-common.js`, and `lib/panel-policy.js`), which is independent of the GJS
+runtime and runs under plain Node. The sysfs-reading parts of the backends are
+exercised on real hardware — the Intel backends on Intel systems; the AMD backend
+is experimental and not yet validated on hardware.
 
 **Releasing a new version:**
 
