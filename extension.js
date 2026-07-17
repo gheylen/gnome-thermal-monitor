@@ -1,0 +1,269 @@
+// SPDX-FileCopyrightText: 2026 G Heylen
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+// Thermal Throttle Monitor — GNOME Shell extension
+//
+// Colour-coded panel indicator for Intel CPU / iGPU / NPU thermal throttle
+// state.  All hardware knowledge lives in backends/; this file is the generic
+// core that drives any set of components discovered at runtime.
+//
+// Architecture: see backends/index.js for the backend/component interface and
+// instructions for adding support for new hardware.
+
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+
+import {Confidence, CONF_SEVERITY, CONF_BADGE, CONF_STYLE_CLASS} from './lib/confidence.js';
+import {isNominalLevel, crossedIntoThrottle} from './lib/panel-policy.js';
+import {BACKENDS, CATEGORY_WARNINGS} from './backends/index.js';
+
+const THROTTLE_LINGER_S = 30;
+
+// ─── Panel indicator ──────────────────────────────────────────────────────────
+
+const ThermalIndicator = GObject.registerClass(
+class ThermalIndicator extends PanelMenu.Button {
+    constructor(settings) {
+        super(0.0, 'Thermal Throttle Monitor');
+        this._settings = settings;
+
+        // Discover hardware; each backend returns zero or more Component objects.
+        this._entries = []; // [{ component, prevState }]
+        const foundCategories = new Set();
+        for (const backend of BACKENDS) {
+            const components = backend.discover();
+            if (components.length > 0)
+                foundCategories.add(backend.category);
+            for (const component of components)
+                this._entries.push({component, prevState: null});
+        }
+
+        // One warning per missing hardware category.
+        for (const [cat, msg] of Object.entries(CATEGORY_WARNINGS)) {
+            if (!foundCategories.has(cat))
+                console.warn(`[ThermalThrottleMonitor] ${msg}`);
+        }
+
+        // Seed prevState so the first poll delta is zero.
+        for (const entry of this._entries)
+            entry.prevState = entry.component.readState();
+
+        this._lingerActive  = false;
+        this._lingerTimer   = null;
+        this._pollTimer     = null;
+        this._settingsConn  = null;
+        this._prevPanelLevel = null; // for edge-triggered throttle notifications
+
+        // Panel label — layout via stylesheet.css; colour via per-level CSS class.
+        this._label = new St.Label({
+            y_align: Clutter.ActorAlign.CENTER,
+            style_class: 'ttm-label ttm-unknown',
+        });
+        this._labelClass = 'ttm-unknown';
+        this.add_child(this._label);
+
+        // Popup menu — one section per discovered component.
+        this._sections = {}; // id → { sep, statusItem, detailItem }
+        this._buildMenu();
+
+        // Begin polling; restart timer when the interval setting changes.
+        this._settingsConn = this._settings.connect(
+            'changed::poll-interval', () => this._startPolling()
+        );
+        this._startPolling();
+    }
+
+    // ── Menu construction ──────────────────────────────────────────────────
+
+    _buildMenu() {
+        for (const {component} of this._entries)
+            this._addSection(component.id, component.sectionTitle);
+    }
+
+    _addSection(id, title) {
+        const sep        = new PopupMenu.PopupSeparatorMenuItem(title);
+        const statusItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
+        const detailItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
+        this.menu.addMenuItem(sep);
+        this.menu.addMenuItem(statusItem);
+        this.menu.addMenuItem(detailItem);
+        this._sections[id] = {sep, statusItem, detailItem};
+    }
+
+    _updateSection(id, conf) {
+        if (!this._sections) return;
+        const s = this._sections[id];
+        if (!s) return;
+        s.statusItem.label.text = `${CONF_BADGE[conf.level]}   ${conf.line1}`;
+        s.detailItem.label.text = conf.line2 ? `  ${conf.line2}` : '';
+    }
+
+    // ── Polling ────────────────────────────────────────────────────────────
+
+    _startPolling() {
+        if (this._pollTimer !== null) {
+            GLib.source_remove(this._pollTimer);
+            this._pollTimer = null;
+        }
+        const intervalSec = this._settings.get_int('poll-interval');
+        this._pollIntervalMs = intervalSec * 1000; // exposed to backends via context.pollMs
+        this._update();
+        this._pollTimer = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT, intervalSec,
+            () => { this._update(); return GLib.SOURCE_CONTINUE; }
+        );
+    }
+
+    // ── Core update ────────────────────────────────────────────────────────
+
+    _update() {
+        try {
+            this._doUpdate();
+        } catch (e) {
+            console.error('[ThermalThrottleMonitor] Unexpected error in _update():', e);
+        }
+    }
+
+    _doUpdate() {
+        const pollMs = this._pollIntervalMs;
+        // Normalise: ensure warn < crit regardless of how the user set them.
+        const raw0   = this._settings.get_int('temp-warn');
+        const raw1   = this._settings.get_int('temp-crit');
+        const tempWarn = Math.min(raw0, raw1);
+        const tempCrit = Math.max(raw0, raw1);
+        const context  = {cpuTempC: null, pollMs, tempWarn, tempCrit};
+
+        // Pass 1: read all states; let each component enrich shared context.
+        const states = this._entries.map(({component}) => {
+            const state = component.readState();
+            component.contributeContext?.(state, context);
+            return state;
+        });
+
+        // Pass 2: calculate confidence for every component.
+        const confs = this._entries.map(({component, prevState}, i) =>
+            component.calcConf(states[i], prevState, context)
+        );
+
+        // Advance prev-state.
+        this._entries.forEach((entry, i) => { entry.prevState = states[i]; });
+
+        // Linger: keep the panel red for THROTTLE_LINGER_S after the last
+        // confirmed thermal event, so brief throttle bursts remain visible.
+        if (confs.some(c => c.level === Confidence.CONFIRMED)) {
+            this._lingerActive = true;
+            this._resetLingerTimer();
+        }
+
+        // Worst confidence level across all components.
+        const worstLevel = CONF_SEVERITY.find(
+            l => confs.some(c => c.level === l)
+        ) ?? Confidence.UNKNOWN;
+        const panelLevel = this._lingerActive ? Confidence.CONFIRMED : worstLevel;
+
+        // Panel label: <icon><temp>[<suffix>]
+        // context.cpuTempC is populated by the CPU backend's contributeContext.
+        // panelSuffix (e.g. ' (3)' for 3 throttling cores) is optional on a conf.
+        const tempStr     = context.cpuTempC !== null ? `${context.cpuTempC}°C` : '?°C';
+        const icon        = (panelLevel === Confidence.CONFIRMED ||
+                             panelLevel === Confidence.HIGH) ? '⚠ ' : '● ';
+        const panelSuffix = confs.find(c => c.panelSuffix)?.panelSuffix ?? '';
+
+        const newClass = CONF_STYLE_CLASS[panelLevel];
+        if (newClass !== this._labelClass) {
+            this._label.remove_style_class_name(this._labelClass);
+            this._label.add_style_class_name(newClass);
+            this._labelClass = newClass;
+        }
+        this._label.set_text(`${icon}${tempStr}${panelSuffix}`);
+
+        // Update popup menu sections.
+        this._entries.forEach(({component}, i) =>
+            this._updateSection(component.id, confs[i])
+        );
+
+        // Behaviour settings.
+        if (this._settings.get_boolean('notify-on-throttle') &&
+            crossedIntoThrottle(panelLevel, this._prevPanelLevel))
+            this._notifyThrottle(confs);
+        this._prevPanelLevel = panelLevel;
+
+        // Hide-when-nominal: keep the indicator out of the panel while calm.
+        // The panel parents the button's container, so toggle that (not `this`)
+        // to collapse cleanly without leaving a gap.
+        this.container.visible = !(this._settings.get_boolean('hide-when-nominal') &&
+                                   isNominalLevel(panelLevel));
+    }
+
+    // ── Linger timer ───────────────────────────────────────────────────────
+
+    _resetLingerTimer() {
+        if (this._lingerTimer !== null) {
+            GLib.source_remove(this._lingerTimer);
+            this._lingerTimer = null;
+        }
+        this._lingerTimer = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT, THROTTLE_LINGER_S, () => {
+                this._lingerActive = false;
+                this._lingerTimer  = null;
+                this._update();
+                return GLib.SOURCE_REMOVE;
+            }
+        );
+    }
+
+    // ── Notifications ──────────────────────────────────────────────────────
+
+    _notifyThrottle(confs) {
+        const hit = confs.find(c => c.level === Confidence.CONFIRMED);
+        const detail = hit
+            ? `${hit.line1.trim()} — ${hit.line2}`
+            : 'A component is thermally throttling.';
+        Main.notify('Thermal throttling detected', detail);
+    }
+
+    // ── Cleanup ────────────────────────────────────────────────────────────
+
+    destroy() {
+        if (this._settingsConn !== null) {
+            this._settings.disconnect(this._settingsConn);
+            this._settingsConn = null;
+        }
+        if (this._pollTimer !== null) {
+            GLib.source_remove(this._pollTimer);
+            this._pollTimer = null;
+        }
+        if (this._lingerTimer !== null) {
+            GLib.source_remove(this._lingerTimer);
+            this._lingerTimer = null;
+        }
+        super.destroy();
+        this._sections = null;
+    }
+});
+
+// ─── Extension lifecycle ──────────────────────────────────────────────────────
+
+export default class ThermalThrottleMonitor extends Extension {
+    enable() {
+        try {
+            this._indicator = new ThermalIndicator(this.getSettings());
+            Main.panel.addToStatusArea(this.uuid, this._indicator);
+        } catch (e) {
+            console.error('[ThermalThrottleMonitor] Failed to enable:', e);
+            this._indicator?.destroy();
+            this._indicator = null;
+        }
+    }
+
+    disable() {
+        this._indicator?.destroy();
+        this._indicator = null;
+    }
+}
