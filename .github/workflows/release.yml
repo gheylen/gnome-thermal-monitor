@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install GJS and the GSettings compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gjs libglib2.0-bin
+
+      # extensions.gnome.org keys releases off metadata.json's integer version.
+      # A tag that disagrees with it would publish a zip nobody can upgrade to.
+      #
+      # The changelog is checked in the same breath, because the one thing a
+      # user can read before upgrading is the release notes, and a heading still
+      # marked "unreleased" means the version was bumped without anyone writing
+      # down what changed. Both are cheap to check and expensive to discover
+      # after the fact: a published EGO version cannot be taken back.
+      - name: Check the tag, metadata.json and the changelog agree
+        run: |
+          tagged="${GITHUB_REF_NAME#v}"
+          declared="$(node -p 'require("./metadata.json").version')"
+          if [ "$tagged" != "$declared" ]; then
+            echo "tag v$tagged does not match metadata.json version $declared" >&2
+            exit 1
+          fi
+          heading="$(grep -m1 -E "^## \\[$declared\\]" CHANGELOG.md || true)"
+          if [ -z "$heading" ]; then
+            echo "CHANGELOG.md has no '## [$declared]' heading" >&2
+            exit 1
+          fi
+          case "$heading" in
+            *unreleased*|*Unreleased*|*UNRELEASED*)
+              echo "CHANGELOG.md still calls version $declared unreleased: $heading" >&2
+              exit 1
+              ;;
+          esac
+
+      - run: npm ci
+      - run: make check
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          files: dist/*.shell-extension.zip
+          generate_release_notes: true

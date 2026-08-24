@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # Dev dependencies. ESLint, its config package and espree move together —
+  # espree is ESLint's own parser, and tools/check-package.mjs uses it directly
+  # — so they arrive as one pull request rather than three to merge in step.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      eslint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "espree"
+
+  # GitHub Actions. Every `uses:` is pinned to a commit SHA, so these bumps are
+  # what keeps the pins current.
+  #
+  # Grouped deliberately: ungrouped, a week where several actions release at
+  # once opens one pull request per action — and because they all edit the same
+  # few workflow lines, any change to those workflows leaves the rest
+  # conflicting. One grouped pull request per week is reviewed once and lands
+  # once. Majors stay separate: they can need a workflow change of their own.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        update-types:
+          - minor
+          - patch

@@ -1,0 +1,1044 @@
+[
+  {
+    "file": "src/domain/cpu.js",
+    "from": "const advanced = (now, before) => now !== null && before !== null && now > before;",
+    "to": "const advanced = (now, before) => now !== null && before !== null && now >= before;",
+    "describes": "CPU: a still counter counts as a throttle"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "if (advanced(current[i].episodes, previous[i].episodes)) began = true;",
+    "to": "if (advanced(current[i].totalMs, previous[i].totalMs)) began = true;",
+    "describes": "CPU: verdict driven by the wrong counter"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    if (!previous || current.length !== previous.length) return {began: false, endedMs: 0};\n",
+    "to": "    if (!previous) return {began: false, endedMs: 0};\n",
+    "describes": "CPU: sibling-count mismatch no longer guarded"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "if (!previous || current.length !== previous.length) return {cores: 0, endedMs: 0};",
+    "to": "if (!previous) return {cores: 0, endedMs: 0};",
+    "describes": "CPU: core-count mismatch no longer guarded"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "const {began, endedMs: ended} = coreDelta(current[i], previous[i]);",
+    "to": "const {began, endedMs: ended} = coreDelta(current[i], previous[0]);",
+    "describes": "CPU: cores compared against the wrong previous core"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    if (endedMs > 0)",
+    "to": "    if (false)",
+    "describes": "CPU: a finished episode goes unreported"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    const user = thresholds.isCritical(tempC) ? Confidence.HIGH",
+    "to": "    const user = thresholds.isWarm(tempC) ? Confidence.HIGH",
+    "describes": "CPU: warm temperature reported as critical"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "        : thresholds.isWarm(tempC) ? Confidence.MEDIUM",
+    "to": "        : thresholds.isCritical(tempC) ? Confidence.MEDIUM",
+    "describes": "CPU: warm band never reported"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "if (tempC === null && tightest === null)\n        return {level: Confidence.UNKNOWN, summary, detail: 'Temperature unreadable'};",
+    "to": "",
+    "describes": "CPU: unreadable temperature reported as nominal"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "episodes: sysfs.readInt(`${dir}/${THROTTLE_COUNT}`),",
+    "to": "episodes: sysfs.readInt(`${dir}/${THROTTLE_TOTAL_MS}`),",
+    "describes": "Intel CPU: episode count read from the wrong file"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "siblings.map(dir => ({",
+    "to": "siblings.slice(0, 1).map(dir => ({",
+    "describes": "Intel CPU: only one sibling read per core"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "            key: sysfs.readText(`${cpu}/topology/core_cpus_list`)\n                ?? sysfs.readText(`${cpu}/topology/thread_siblings_list`),",
+    "to": "            key: null,",
+    "describes": "Intel CPU: topology never consulted"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "            key: sysfs.readText(`${cpu}/topology/core_cpus_list`)\n                ?? sysfs.readText(`${cpu}/topology/thread_siblings_list`),",
+    "to": "            key: sysfs.readText(`${cpu}/topology/package_cpus_list`)\n                ?? sysfs.readText(`${cpu}/topology/thread_siblings_list`),",
+    "describes": "Intel CPU: cores grouped by package, so a whole socket is one core"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "if (cpus.some(cpu => cpu.key === null))",
+    "to": "if (false)",
+    "describes": "Intel CPU: partial topology mixes cores and threads"
+  },
+  {
+    "file": "src/hardware/hwmon.js",
+    "from": "        .filter(device => sysfs.readText(`${device}/name`) === name);",
+    "to": "        .filter(() => true);",
+    "describes": "hwmon: the driver name is not checked"
+  },
+  {
+    "file": "src/hardware/hwmon.js",
+    "from": "    return millidegrees !== null ? Math.round(millidegrees / 1000) : null;",
+    "to": "    return millidegrees !== null ? Math.floor(millidegrees / 1000) : null;",
+    "describes": "hwmon: rounding becomes truncation"
+  },
+  {
+    "file": "src/hardware/cpu-amd.js",
+    "from": "const PREFERRED_LABELS = ['Tctl', 'Tdie'];",
+    "to": "const PREFERRED_LABELS = ['Tdie', 'Tctl'];",
+    "describes": "AMD CPU: sensor preference reversed"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "if (limited && reading.prochot === 1)",
+    "to": "if (limited && reading.prochot === 2)",
+    "describes": "GPU: PROCHOT flag never matches"
+  },
+  {
+    "file": "src/hardware/npu-intel.js",
+    "from": "maxMhz: configuredMaxMhz > 0 ? configuredMaxMhz : hardwareMaxMhz,",
+    "to": "maxMhz: hardwareMaxMhz,",
+    "describes": "NPU: a configured ceiling ignored in favour of the hardware one"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "return hardwareMaxMhz > maxMhz ?",
+    "to": "return hardwareMaxMhz >= maxMhz ?",
+    "describes": "NPU: an uncapped ceiling described as lowered"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "    const reason = name => status === 0 ? null : throttleAttribute(`reason_${name}`);",
+    "to": "    const reason = name => throttleAttribute(`reason_${name}`);",
+    "describes": "GPU: xe reason registers read on a GT that reported no limit"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "    const reason = name => status === 0 ? null : throttleAttribute(`reason_${name}`);",
+    "to": "    const reason = name => status === 1 ? null : throttleAttribute(`reason_${name}`);",
+    "describes": "GPU: xe reasons read only when nothing is limited"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "    const reason = name => idle || status === 0 ? null : throttleReason(name);",
+    "to": "    const reason = name => idle ? null : throttleReason(name);",
+    "describes": "GPU: i915 reason files read on a GT that reported no limit"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "    const reason = name => idle || status === 0 ? null : throttleReason(name);",
+    "to": "    const reason = name => status === 0 ? null : throttleReason(name);",
+    "describes": "GPU: i915 reason files read on a parked GT, resuming it"
+  },
+  {
+    "file": "eslint.config.js",
+    "from": "                ['gi://Gtk', 'gi://Adw', 'gi://Gdk', '**/Shell/Extensions/js/**'],",
+    "to": "                ['gi://Gtk', 'gi://Adw', 'gi://Gdk'],",
+    "describes": "Lint: the shell adapter may reach into the extensions application"
+  },
+  {
+    "file": "tools/mutate.mjs",
+    "from": "    if (!original.includes(mutant.from))",
+    "to": "    if (false && !original.includes(mutant.from))",
+    "describes": "Mutate: a stale anchor reported as a killed mutant"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "    for (const required of ['metadata.json', 'stylesheet.css', 'LICENSE']) {",
+    "to": "    for (const required of ['metadata.json', 'stylesheet.css']) {",
+    "describes": "Package: a GPL extension shipped without its licence"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "    if (!schemas.some(name => name.endsWith('.gschema.xml')))",
+    "to": "    if (false && !schemas.some(name => name.endsWith('.gschema.xml')))",
+    "describes": "Package: a missing schema source waved through"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "    for (const compiled of schemas.filter(name => name.endsWith('gschemas.compiled')))",
+    "to": "    for (const compiled of schemas.filter(() => false))",
+    "describes": "Package: a compiled schema allowed into the zip"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "glob('**/*.{js,mjs}', {cwd: root})",
+    "to": "glob('**/*.js', {cwd: root})",
+    "describes": "Package: a stray .mjs invisible to the orphan sweep"
+  },
+  {
+    "file": "tools/mutate.mjs",
+    "from": "        await runTests(workspace, mutant.suite ?? 'node');",
+    "to": "        runTests(workspace, mutant.suite ?? 'node');",
+    "describes": "Mutate: an asynchronous suite started but not waited for"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "        && targetC < throttlePointC && tempC >= targetC;",
+    "to": "        && targetC <= throttlePointC && tempC >= targetC;",
+    "describes": "Temperature: a target equal to the trip point treated as a real one"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "        && targetC < throttlePointC && tempC >= targetC;",
+    "to": "        && targetC < throttlePointC && tempC > targetC;",
+    "describes": "Temperature: a sensor exactly at its target reported as below it"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "    if (headroom <= NEAR_THROTTLE_C || pastTarget(tightest)) return Confidence.MEDIUM;",
+    "to": "    if (headroom <= NEAR_THROTTLE_C) return Confidence.MEDIUM;",
+    "describes": "Temperature: the hardware's own thermal target ignored by the level"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "    if (headroom <= NEAR_THROTTLE_C || pastTarget(tightest)) return Confidence.MEDIUM;",
+    "to": "    if (pastTarget(tightest)) return Confidence.MEDIUM;",
+    "describes": "Temperature: the target replaces the kernel band instead of adding to it"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "    targetC: degreesAt(sysfs, `${channel}_max`),",
+    "to": "    targetC: degreesAt(sysfs, `${channel}_crit`),",
+    "describes": "Intel CPU: the trip point read as the thermal target"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    ].filter(ms => typeof ms === 'number' && ms > 0);",
+    "to": "        .filter(ms => typeof ms === 'number');",
+    "describes": "CPU: an unreadable worst episode counted as zero"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    return recorded.length > 0 ? Math.max(...recorded) : 0;",
+    "to": "    return recorded.length > 0 ? Math.min(...recorded) : 0;",
+    "describes": "CPU: the shortest recorded episode reported as the worst"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "        ...packageMaxMs ?? [],",
+    "to": "",
+    "describes": "CPU: the package's own worst episode ignored"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "        detail: worstMs > 0",
+    "to": "        detail: worstMs >= 0",
+    "describes": "CPU: a machine with no history told it has a zero-length one"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "            maxMs: sysfs.readInt(`${dir}/${THROTTLE_MAX_MS}`),",
+    "to": "            maxMs: sysfs.readInt(`${dir}/${THROTTLE_TOTAL_MS}`),",
+    "describes": "Intel CPU: the accumulated total read as the worst single episode"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "            throttlingCount: verdicts.find(verdict =>\n                isThrottling(verdict.level) && verdict.throttlingCount > 0)",
+    "to": "            throttlingCount: verdicts.find(verdict =>\n                verdict.throttlingCount > 0)",
+    "describes": "Monitor: a core count claimed by a verdict short of CONFIRMED"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "        body: culprit\n            ? `${sectionTitle(culprit.title)}: ${culprit.detail || culprit.summary}`",
+    "to": "        body: culprit\n            ? `${culprit.title}: ${culprit.detail || culprit.summary}`",
+    "describes": "Notification: an unbounded kernel string in the body"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "    const culprit = (components ?? []).find(component => isThrottling(component.level));",
+    "to": "    const culprit = (components ?? [])[0];",
+    "describes": "Notification: the first component named rather than the throttling one"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "            ? `${sectionTitle(culprit.title)}: ${culprit.detail || culprit.summary}`",
+    "to": "            ? `${sectionTitle(culprit.title)}: ${culprit.detail}`",
+    "describes": "Notification: a component with no detail line reported as empty"
+  },
+  {
+    "file": "src/hardware/gpu-reasons.js",
+    "from": "if (read(attribute) === 1) return label;",
+    "to": "if (read(attribute) === 0) return label;",
+    "describes": "GPU: a cleared thermal flag read as asserted"
+  },
+  {
+    "file": "src/hardware/gpu-reasons.js",
+    "from": "{attribute: 'ratl', label:",
+    "to": "{attribute: 'pl1', label:",
+    "describes": "GPU: a sustained power limit presented as heat"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "if (limited && reading.thermalReason)",
+    "to": "if (limited && !reading.thermalReason)",
+    "describes": "GPU: the thermal reason is reported only when there is none"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "const limited = reading.throttled !== 0;",
+    "to": "const limited = reading.throttled === 1;",
+    "describes": "GPU: unreadable status treated as a denial"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "const limited = reading.throttled !== 0;",
+    "to": "const limited = true;",
+    "describes": "GPU: status gate removed"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "    if (maxMhz !== null && maxMhz < rp0Mhz)",
+    "to": "    if (maxMhz !== null && maxMhz < rp0Mhz * 0.95)",
+    "describes": "GPU: a one-step ceiling slips under a tolerance"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "const BELOW_MAX_RATIO = 0.75;",
+    "to": "const BELOW_MAX_RATIO = 0.5;",
+    "describes": "GPU: below-max ratio lowered"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "const hasCeiling = reading => reading.rp0Mhz > 0;",
+    "to": "const hasCeiling = reading => reading.rp0Mhz !== null;",
+    "describes": "GPU: zero boost ceiling accepted"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "    if (currentMhz === null)\n        return {level: Confidence.UNKNOWN, summary: 'No data', detail: frequencyText(reading)};\n\n",
+    "to": "",
+    "describes": "GPU: nominal claimed from no frequency evidence"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "if (reading.idle)",
+    "to": "if (false)",
+    "describes": "GPU: a parked engine is not idle"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "`${freqDir}/${perGt ? 'rps' : 'gt'}_${name}_freq_mhz`",
+    "to": "`${freqDir}/gt_${name}_freq_mhz`",
+    "describes": "i915: per-GT attributes use the legacy spelling"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "if (!/^card\\d+$/.test(entry)) continue;",
+    "to": "",
+    "describes": "i915: connector nodes treated as cards"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "if (sysfs.readInt(frequencyPath(candidate, 'RP0')) > 0) gts.push(candidate);",
+    "to": "gts.push(candidate);",
+    "describes": "i915: per-GT discovery accepts an unusable ceiling"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "if (gts.length === before && sysfs.readInt(frequencyPath(legacy, 'RP0')) > 0)",
+    "to": "if (sysfs.readInt(frequencyPath(legacy, 'RP0')) > 0)",
+    "describes": "i915: legacy fallback no longer per-card"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "        gt.perGt ? sysfs.readInt(`${gt.freqDir}/throttle_reason_${name}`) : null;",
+    "to": "        gt.perGt ? null : null;",
+    "describes": "i915: throttle reasons never read"
+  },
+  {
+    "file": "src/hardware/gpu-i915.js",
+    "from": "    const status = idle ? null : throttleReason('status');",
+    "to": "    const status = throttleReason('status');",
+    "describes": "i915: parked GT still woken for its reasons"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "if (!(sysfs.readInt(`${freqDir}/rp0_freq`) > 0)) continue;",
+    "to": "if (sysfs.readText(`${freqDir}/rp0_freq`) === null) continue;",
+    "describes": "Xe: discovery accepts an unusable ceiling"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "idleStatus.includes('c6')",
+    "to": "idleStatus.includes('c9')",
+    "describes": "Xe: idle state never matches"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "roleName.includes('-mc')",
+    "to": "roleName.includes('-zz')",
+    "describes": "Xe: media engine mislabelled"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "idle ? null : sysfs.readInt(`${throttleDir}/${name}`)",
+    "to": "sysfs.readInt(`${throttleDir}/${name}`)",
+    "describes": "Xe: parked GT still woken for its reasons"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "const NOMINAL_RATIO = 0.85;",
+    "to": "const NOMINAL_RATIO = 0.5;",
+    "describes": "NPU: nominal ratio lowered"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "Math.max(0, busyUs - previousBusyUs)",
+    "to": "busyUs - previousBusyUs",
+    "describes": "NPU: counter reset no longer clamped"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "if (reading.currentMhz === 0)",
+    "to": "if (reading.currentMhz < 0)",
+    "describes": "NPU: idle never detected"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "    if (previousBusyUs === null)\n        return frequency;\n",
+    "to": "",
+    "describes": "NPU: unknown interval reported as no work"
+  },
+  {
+    "file": "src/hardware/npu-intel.js",
+    "from": "const hardwareMaxMhz = sysfs.readInt(`${devicePath}/npu_max_frequency_mhz`);",
+    "to": "const hardwareMaxMhz = sysfs.readInt(`${devicePath}/npu_min_frequency_mhz`);",
+    "describes": "NPU: wrong max-frequency attribute"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "if (isThrottling(worst)) this.#lingerUntilMs = now + this.#lingerMs;",
+    "to": "if (isThrottling(worst)) this.#lingerUntilMs = now;",
+    "describes": "Monitor: linger window collapsed"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "now >= this.#lingerUntilMs",
+    "to": "now > this.#lingerUntilMs + 1e9",
+    "describes": "Monitor: linger never expires"
+  },
+  {
+    "file": "src/domain/thresholds.js",
+    "from": "this.#warnC = Math.min(warnC, critC);\n        this.#critC = Math.max(warnC, critC);",
+    "to": "this.#warnC = warnC;\n        this.#critC = critC;",
+    "describes": "Thresholds: pair no longer ordered"
+  },
+  {
+    "file": "src/domain/thresholds.js",
+    "from": "return isReading(tempC) && tempC >= this.#critC;",
+    "to": "return isReading(tempC) && tempC > this.#critC;",
+    "describes": "Thresholds: critical boundary excluded"
+  },
+  {
+    "file": "src/domain/thresholds.js",
+    "from": "return isReading(tempC) && tempC >= this.#warnC;",
+    "to": "return isReading(tempC) && tempC > this.#warnC;",
+    "describes": "Thresholds: warm boundary excluded"
+  },
+  {
+    "file": "src/domain/thresholds.js",
+    "from": "const isReading = tempC => typeof tempC === 'number' && Number.isFinite(tempC);",
+    "to": "const isReading = tempC => tempC !== null;",
+    "describes": "Thresholds: a missing reading counts as a temperature"
+  },
+  {
+    "file": "src/domain/thresholds.js",
+    "from": "Object.freeze(this);",
+    "to": "",
+    "describes": "Thresholds: value object left mutable"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "const assessed = this.#assessAll(readings, previous, thresholds, undefined);",
+    "to": "const assessed = this.#assessAll(readings, previous, thresholds, this.#onError);",
+    "describes": "Monitor: reassess re-reports broken components"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "        const assessed = this.#assessAll(readings, previous, thresholds, undefined);\n",
+    "to": "        const assessed = this.#assessAll(readings, previous, thresholds, undefined);\n        this.#advanceLinger(assessed.worst);\n",
+    "describes": "Monitor: reassess advances the linger clock"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "const throttleStarted = isThrottling(level) && !isThrottling(this.#previousLevel);",
+    "to": "const throttleStarted = isThrottling(level);",
+    "describes": "Monitor: notification fires every poll"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "return this.#lingerUntilMs !== null ? Confidence.CONFIRMED : worst;",
+    "to": "return worst;",
+    "describes": "Monitor: linger no longer holds the panel"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "this.#lastPoll = {readings, previous};",
+    "to": "this.#lastPoll = {readings, previous: this.#previous};",
+    "describes": "Monitor: reassess diffs against the wrong window"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "if (claimedIds.has(claimed.id)) {",
+    "to": "if (false) {",
+    "describes": "Discovery: duplicate ids allowed"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "read: () => value.read(),",
+    "to": "read: value.read,",
+    "describes": "Discovery: component methods unbound from their object"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "        id,\n        title: value.title,",
+    "to": "        id: value.id,\n        title: value.title,",
+    "describes": "Discovery: component id not fixed"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "    const projection = name => typeof value[name] === 'function'\n        ? {[name]: reading => value[name](reading)}\n        : {};",
+    "to": "    const projection = name => ({[name]: reading => value[name](reading)});",
+    "describes": "Discovery: an absent projection is invented"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "    if (typeof value.read !== 'function' || typeof value.assess !== 'function')\n        throw new TypeError('read and assess must be functions');\n",
+    "to": "",
+    "describes": "Discovery: malformed component not rejected"
+  },
+  {
+    "file": "src/domain/confidence.js",
+    "from": "    Confidence.UNKNOWN,\n    Confidence.IDLE,\n]);",
+    "to": "    Confidence.IDLE,\n    Confidence.UNKNOWN,\n]);",
+    "describes": "Confidence: UNKNOWN/IDLE severity swapped"
+  },
+  {
+    "file": "src/sysfs/port.js",
+    "from": "if (!/^[+-]?\\d+$/.test(trimmed)) return null;",
+    "to": "if (trimmed === '') return null;",
+    "describes": "Port: integer parsing loosened"
+  },
+  {
+    "file": "src/sysfs/port.js",
+    "from": "list: path => [...list(path)].sort(naturalCompare),",
+    "to": "list: path => [...list(path)],",
+    "describes": "Port: natural ordering dropped"
+  },
+  {
+    "file": "src/sysfs/port.js",
+    "from": "if (l !== r) return l < r ? -1 : 1;\n        } else if (l !== r) {",
+    "to": "} else if (l !== r) {",
+    "describes": "Port: leading-zero names compare equal again"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "return truncate(collapsed, MAX_TITLE_LENGTH);",
+    "to": "return collapsed;",
+    "describes": "Presentation: section heading no longer bounded"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "if (collapsed === '') return 'Unknown component';",
+    "to": "",
+    "describes": "Presentation: empty heading no longer named"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "characters.length > limit",
+    "to": "false",
+    "describes": "Text: truncation disabled"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "const characters = [...text];",
+    "to": "const characters = text.split(\"\");",
+    "describes": "Text: truncation counts UTF-16 units again"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "return current.some((episodes, i) => advanced(episodes, previous[i]));",
+    "to": "return current.some((episodes, i) => advanced(episodes, previous[0]));",
+    "describes": "CPU package: copies compared against the wrong CPU"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "if (!current || !previous || current.length !== previous.length) return false;",
+    "to": "if (!current || !previous) return false;",
+    "describes": "CPU package: length mismatch no longer guarded"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "return current.some((episodes, i) => advanced(episodes, previous[i]));",
+    "to": "return current.every((episodes, i) => advanced(episodes, previous[i]));",
+    "describes": "CPU package: a directed interrupt no longer counts"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    if (packageThrottled(reading.packageEpisodes, previous?.packageEpisodes))\n        return confirmed(summary, 'CPU package throttling — thermal (TCC)', worstMs);\n",
+    "to": "",
+    "describes": "CPU package: the package signal is dropped entirely"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "packageEpisodes: cpuDirs.map(dir => sysfs.readInt(`${dir}/${PACKAGE_THROTTLE_COUNT}`)),",
+    "to": "packageEpisodes: cpuDirs.map(dir => sysfs.readInt(`${dir}/${THROTTLE_COUNT}`)),",
+    "describes": "Intel CPU: package counter read from the core attribute"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "cpuDirs: coreGroups.flat()",
+    "to": "cpuDirs: coreGroups.map(group => group[0])",
+    "describes": "Intel CPU: only one sibling contributes a package copy"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "            key: sysfs.readText(`${cpu}/topology/core_cpus_list`)\n                ?? sysfs.readText(`${cpu}/topology/thread_siblings_list`),",
+    "to": "            key: sysfs.readText(`${cpu}/topology/core_cpus_list`),",
+    "describes": "Intel CPU: a pre-5.3 kernel's sibling list ignored, losing all grouping"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "            key: sysfs.readText(`${cpu}/topology/core_cpus_list`)\n                ?? sysfs.readText(`${cpu}/topology/thread_siblings_list`),",
+    "to": "            key: sysfs.readText(`${cpu}/topology/thread_siblings_list`)\n                ?? sysfs.readText(`${cpu}/topology/core_cpus_list`),",
+    "describes": "Intel CPU: the deprecated sibling-list name preferred over the current one"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "const SUSPENDED = new Set(['suspended', 'suspending']);",
+    "to": "const SUSPENDED = new Set([]);",
+    "describes": "Xe: a suspended device is woken anyway"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "if (runtimeStatus !== null && SUSPENDED.has(runtimeStatus.toLowerCase()))",
+    "to": "if (runtimeStatus === null || SUSPENDED.has(runtimeStatus.toLowerCase()))",
+    "describes": "Xe: an absent runtime_status reads as suspended"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "rp0Mhz: frequency('rp0'), // guard-free; safe on a suspended device",
+    "to": "rp0Mhz: null,",
+    "describes": "Xe: the guard-free ceiling is thrown away"
+  },
+  {
+    "file": "src/hardware/gpu-xe.js",
+    "from": "            currentMhz: 0,\n            maxMhz: null,",
+    "to": "            currentMhz: null,\n            maxMhz: null,",
+    "describes": "Xe: a suspended device reports no frequency at all"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "const collapsed = (title ?? '').replace(/\\s+/g, ' ').trim();",
+    "to": "const collapsed = (title ?? '').trim();",
+    "describes": "Presentation: internal whitespace survives into a one-line heading"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "    if (currentMhz === null)\n",
+    "to": "    if (currentMhz === null && maxMhz === null)\n",
+    "describes": "GPU: nominal claimed from a ceiling with no current clock"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "        return {level: Confidence.UNKNOWN, summary: 'No data', detail: frequencyText(reading)};\n\n    // A ceiling below RP0",
+    "to": "        return {level: Confidence.UNKNOWN, summary: 'No data', detail: ''};\n\n    // A ceiling below RP0",
+    "describes": "GPU: a readable frequency is hidden when the ceiling is missing"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "        if (typeof now !== 'function')\n            throw new TypeError('Monitor requires a monotonic clock: {now: () => number}');\n",
+    "to": "",
+    "describes": "Monitor: the clock is optional again"
+  },
+  {
+    "file": "src/log.js",
+    "from": "    if (cause === undefined) console.error(`${PREFIX} ${message}`);\n    else console.error(`${PREFIX} ${message}`, cause);",
+    "to": "    console.error(`${PREFIX} ${message}`, cause);",
+    "describes": "Log: an absent cause is written as \"undefined\""
+  },
+  {
+    "file": "src/log.js",
+    "from": "if (cause === undefined)",
+    "to": "if (!cause)",
+    "describes": "Log: a falsy cause is dropped"
+  },
+  {
+    "file": "src/log.js",
+    "from": "const PREFIX = '[ThermalThrottleMonitor]';",
+    "to": "const PREFIX = '';",
+    "describes": "Log: the prefix a bug report greps for is gone"
+  },
+  {
+    "file": "src/log.js",
+    "from": "console.warn(`${PREFIX} ${message}`);",
+    "to": "console.error(`${PREFIX} ${message}`);",
+    "describes": "Log: warnings go to the error channel"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "            worstMs, {throttlingCount: cores});",
+    "to": "            worstMs, {throttlingCount: 1});",
+    "describes": "CPU: the panel count is not the number of cores"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "    const count = throttlingCount ? ` (${throttlingCount})` : '';",
+    "to": "    const count = '';",
+    "describes": "Presentation: the panel stops showing the core count"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "    const count = throttlingCount\n        ? `, ${throttlingCount} core${throttlingCount === 1 ? '' : 's'} throttling`\n        : '';",
+    "to": "    const count = '';",
+    "describes": "Presentation: the core count is shown but never spoken"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "throttlingCount === 1 ? '' : 's'",
+    "to": "'s'",
+    "describes": "Presentation: one core is spoken in the plural"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "                isThrottling(verdict.level) && verdict.throttlingCount > 0)\n                ?.throttlingCount ?? null,",
+    "to": "                isThrottling(verdict.level) && verdict.throttlingCount > 0)\n                ?.throttlingCount ?? verdicts.at(-1)?.throttlingCount ?? null,",
+    "describes": "Monitor: the panel count falls back to the last component when none is confirmed"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "const NEAR_THROTTLE_C = 10;",
+    "to": "const NEAR_THROTTLE_C = 1;",
+    "describes": "Temperature: the approaching-throttle band is narrowed"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "const NEAR_THROTTLE_C = 10;",
+    "to": "const NEAR_THROTTLE_C = 40;",
+    "describes": "Temperature: the approaching-throttle band is widened"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    if (tempC === null && tightest === null)",
+    "to": "    if (tempC === null)",
+    "describes": "CPU: a readable core discarded because the package sensor failed"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "        ...reading.coreTemps ?? [],",
+    "to": "",
+    "describes": "CPU: the per-core sensors never considered"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "        sensor.throttlePointC - sensor.tempC < tightest.throttlePointC - tightest.tempC",
+    "to": "        sensor.throttlePointC - sensor.tempC > tightest.throttlePointC - tightest.tempC",
+    "describes": "Temperature: the sensor with the most headroom answers, not the least"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "        sensor.throttlePointC - sensor.tempC < tightest.throttlePointC - tightest.tempC",
+    "to": "        sensor.tempC > tightest.tempC",
+    "describes": "Temperature: the hottest sensor answers rather than the closest to its own trip"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "    throttlePointC: degreesAt(sysfs, `${channel}_crit`),",
+    "to": "    throttlePointC: degreesAt(sysfs, `${channel}_max`),",
+    "describes": "Intel CPU: a core's trip point read from its target attribute"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "cores: channels.filter(({label}) => CORE_LABEL.test(label ?? '')),",
+    "to": "cores: channels.filter(({label}) => label !== PACKAGE_LABEL),",
+    "describes": "Intel CPU: any channel that is not the package treated as a core"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "    const headroom = throttlePointC - tempC;",
+    "to": "    const headroom = tempC - throttlePointC;",
+    "describes": "Temperature: headroom computed the wrong way round"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "    if (headroom <= 0) return Confidence.HIGH;",
+    "to": "    if (headroom < 0) return Confidence.HIGH;",
+    "describes": "Temperature: reaching the trip point exactly is not HIGH"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "    if (headroom <= NEAR_THROTTLE_C || pastTarget(tightest)) return Confidence.MEDIUM;",
+    "to": "    if (headroom < NEAR_THROTTLE_C || pastTarget(tightest)) return Confidence.MEDIUM;",
+    "describes": "Temperature: the band boundary is excluded"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    const level = worstOf([hardware, user]);",
+    "to": "    const level = user;",
+    "describes": "CPU: the hardware trip point is ignored for the level"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    const level = worstOf([hardware, user]);",
+    "to": "    const level = hardware;",
+    "describes": "CPU: the user's thresholds are ignored"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "        ({tempC, throttlePointC}) => tempC !== null && throttlePointC > 0);",
+    "to": "        ({tempC, throttlePointC}) => tempC !== null && throttlePointC !== null);",
+    "describes": "Temperature: a zero trip point is treated as real"
+  },
+  {
+    "file": "src/domain/cpu.js",
+    "from": "    const preference = !isWorse(user, hardware) ? null",
+    "to": "    const preference = user === Confidence.LOW ? null",
+    "describes": "CPU: a threshold the hardware agrees with is still attributed"
+  },
+  {
+    "file": "src/domain/confidence.js",
+    "from": "    return level !== than && worstOf([level, than]) === level;",
+    "to": "    return level !== than;",
+    "describes": "CPU: a weaker threshold is attributed as if it raised the level"
+  },
+  {
+    "file": "src/domain/temperature.js",
+    "from": "            : `${headroom}°C below the throttle point (${throttlePointC}°C)${target}`;",
+    "to": "            : `${headroom}°C below the throttle point`;",
+    "describes": "Temperature: the trip point itself is not shown"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "const throttlePointPath = coretemp !== null ? `${coretemp.package}_crit` : null;",
+    "to": "const throttlePointPath = coretemp !== null ? `${coretemp.package}_max` : null;",
+    "describes": "Intel CPU: the throttle point read from ttarget, not TjMax"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "        const throttlePointPath = coretemp !== null ? `${coretemp.package}_crit` : null;",
+    "to": "        const throttlePointPath = `${findPackageThermalZone(sysfs)}_crit`;",
+    "describes": "Intel CPU: a throttle point invented on the thermal-zone path"
+  },
+  {
+    "file": "src/hardware/cpu-amd.js",
+    "from": "throttlePointC: degreesAt(sysfs, `${channel}_crit`),",
+    "to": "throttlePointC: degreesAt(sysfs, `${channel}_max`),",
+    "describes": "AMD CPU: the throttle point read from k10temp's fixed _max"
+  },
+  {
+    "file": "src/hardware/cpu-amd.js",
+    "from": "            if (label !== null && !byLabel.has(label)) byLabel.set(label, channel);",
+    "to": "            if (label !== null) byLabel.set(label, channel);",
+    "describes": "AMD CPU: a later duplicate label overrides the first"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "    if (packageTempC === null || !(packageThrottlePointC > 0)) return '';",
+    "to": "    if (packageTempC === null) return '';",
+    "describes": "NPU: a missing CPU trip point is treated as zero"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "    if (headroom > NEAR_THROTTLE_C) return '';",
+    "to": "    if (headroom > 40) return '';",
+    "describes": "NPU: a cool CPU is reported as near its trip point"
+  },
+  {
+    "file": "src/domain/npu.js",
+    "from": "        ? ' — CPU at its throttle point'\n        : ` — CPU ${headroom}°C from its throttle point`;",
+    "to": "        ? ' — CPU at its throttle point'\n        : ' — CPU near its throttle point';",
+    "describes": "NPU: the CPU's remaining headroom is not quantified"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "                    packageThrottlePointC:\n                        component.throttlePointC?.(readings[i]) ?? null,",
+    "to": "                    packageThrottlePointC: null,",
+    "describes": "Monitor: the trip point never reaches the rules"
+  },
+  {
+    "file": "src/domain/monitor.js",
+    "from": "                if (tempC === null || tempC === undefined) continue;",
+    "to": "                if (tempC === undefined) continue;",
+    "describes": "Monitor: a null temperature offer stops the search"
+  },
+  {
+    "file": "src/hardware/cpu-intel.js",
+    "from": "            throttlePointC: reading => reading?.throttlePointC ?? null,",
+    "to": "            throttlePointC: () => null,",
+    "describes": "Intel CPU: the trip point is not offered to the other rules"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "        ...projection('throttlePointC'),",
+    "to": "",
+    "describes": "Discovery: the trip-point projection is dropped in transit"
+  },
+  {
+    "file": "src/domain/discovery.js",
+    "from": "    const projection = name => typeof value[name] === 'function'\n        ? {[name]: reading => value[name](reading)}\n        : {};",
+    "to": "    const projection = name => typeof value[name] === 'function'\n        ? {[name]: value[name]}\n        : {};",
+    "describes": "Discovery: a projection is unbound from its object"
+  },
+  {
+    "file": "src/domain/confidence.js",
+    "from": "    return level !== than && worstOf([level, than]) === level;",
+    "to": "    return worstOf([level, than]) === level;",
+    "describes": "Confidence: a level counts as worse than itself"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "        reached.add(file);\n\n        let specifiers;",
+    "to": "        let specifiers;",
+    "describes": "check-package: an unparseable module is also called an orphan"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "        if (RUNTIME_ALLOWED.has(name)) continue;",
+    "to": "        if (true) continue;",
+    "describes": "check-package: the layering is not checked in the artifact"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "    for (const required of ['metadata.json', 'stylesheet.css', 'LICENSE']) {\n        try {",
+    "to": "    for (const required of []) {\n        try {",
+    "describes": "check-package: a package missing metadata.json passes"
+  },
+  {
+    "file": "tools/check-package.mjs",
+    "from": "            problems.push(`${found} is in the package but nothing imports it`);",
+    "to": "",
+    "describes": "check-package: an unreferenced module is not reported"
+  },
+  {
+    "file": "src/hardware/hwmon.js",
+    "from": "            channel: `${device}/${file.slice(0, -'_label'.length)}`,",
+    "to": "            channel: `${device}/${file}`,",
+    "describes": "hwmon: the channel keeps the _label suffix"
+  },
+  {
+    "file": "src/hardware/hwmon.js",
+    "from": "        .filter(file => /^temp\\d+_label$/.test(file))",
+    "to": "        .filter(file => file.endsWith('_label'))",
+    "describes": "hwmon: a non-temperature channel returned as a temperature one"
+  },
+  {
+    "file": "src/hardware/hwmon.js",
+    "from": "    const millidegrees = path !== null ? sysfs.readInt(path) : null;",
+    "to": "    const millidegrees = sysfs.readInt(path);",
+    "describes": "hwmon: a null path is read rather than answered"
+  },
+  {
+    "file": "eslint.config.js",
+    "from": "    ['Object', 'groupBy', 117],\n",
+    "to": "",
+    "describes": "Lint: a built-in newer than the floor is allowed in shipped code"
+  },
+  {
+    "file": "eslint.config.js",
+    "from": "            ecmaVersion: 2022,",
+    "to": "            ecmaVersion: 2024,",
+    "describes": "Lint: shipped code is parsed at a level the oldest shell cannot"
+  },
+  {
+    "file": "src/sysfs/gio.js",
+    "suite": "gjs",
+    "from": "        return decoder.decode(bytes).trim();",
+    "to": "        return decoder.decode(bytes);",
+    "describes": "Gio: contents are not trimmed"
+  },
+  {
+    "file": "src/sysfs/gio.js",
+    "suite": "gjs",
+    "from": "const decoder = new TextDecoder('utf-8', {fatal: true});",
+    "to": "const decoder = new TextDecoder();",
+    "describes": "Gio: a file that is not UTF-8 comes back as replacement characters"
+  },
+  {
+    "file": "src/sysfs/gio.js",
+    "suite": "gjs",
+    "from": "    } catch {\n        return null; // absent, unreadable, a directory, or not valid UTF-8\n    }",
+    "to": "    } catch {\n        return ''; // absent, unreadable, a directory, or not valid UTF-8\n    }",
+    "describes": "Gio: an unreadable file is an empty string rather than missing data"
+  },
+  {
+    "file": "src/sysfs/gio.js",
+    "suite": "gjs",
+    "from": "        return (info.get_symlink_target() ?? '').split('/').pop() || null;",
+    "to": "        return (info.get_symlink_target() ?? '').split('/')[0] || null;",
+    "describes": "Gio: driverOf takes the first path segment, not the basename"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "    if (foundNothing(snapshot)) return `${glyph} ${NOTHING_TO_REPORT}`;",
+    "to": "",
+    "describes": "Presentation: no hardware is reported as an unread sensor"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "    if (foundNothing(snapshot))\n        return 'Thermal throttle monitor: no supported hardware found';\n",
+    "to": "",
+    "describes": "Presentation: no hardware is spoken as no sensor data"
+  },
+  {
+    "file": "src/presentation.js",
+    "from": "const foundNothing = ({components}) => Array.isArray(components) && components.length === 0;",
+    "to": "const foundNothing = ({components}) => !components || components.length === 0;",
+    "describes": "Presentation: a snapshot with no components field reads as an empty machine"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "            level: Confidence.LOW,\n            summary: 'Frequency limited',",
+    "to": "            level: Confidence.MEDIUM,\n            summary: 'Frequency limited',",
+    "describes": "GPU: a software ceiling is reported at a thermal level"
+  },
+  {
+    "file": "src/domain/gpu.js",
+    "from": "    if (maxMhz !== null && maxMhz < rp0Mhz)",
+    "to": "    if (maxMhz !== null && maxMhz <= rp0Mhz)",
+    "describes": "GPU: an uncapped ceiling reads as limited"
+  },
+  {
+    "file": "src/hardware/gpu-amd.js",
+    "from": "        .filter(({channel}) => sysfs.readText(`${channel}_input`) !== null);",
+    "to": "        .filter(({channel}) => channel !== null);",
+    "describes": "AMD GPU: a labelled channel with no sensor behind it kept"
+  },
+  {
+    "file": "src/hardware/gpu-amd.js",
+    "from": "        currentMhz: hertz > 0 ? Math.round(hertz / HZ_PER_MHZ) : null,",
+    "to": "        currentMhz: hertz > 0 ? Math.round(hertz / 1000) : null,",
+    "describes": "AMD GPU: the gfx clock read as kilohertz rather than hertz"
+  },
+  {
+    "file": "src/hardware/gpu-amd.js",
+    "from": "            throttlePointC: degreesAt(sysfs, `${channel}_crit`),",
+    "to": "            throttlePointC: degreesAt(sysfs, `${channel}_emergency`),",
+    "describes": "AMD GPU: the ASIC shutdown point read as the throttle point"
+  },
+  {
+    "file": "src/domain/gpu-temperature.js",
+    "from": "    const level = hardware === Confidence.HIGH || user === Confidence.HIGH ? Confidence.HIGH",
+    "to": "    const level = hardware === Confidence.HIGH || user === Confidence.HIGH ? Confidence.CONFIRMED",
+    "describes": "GPU temperature: a rule with no counter reaching CONFIRMED"
+  },
+  {
+    "file": "src/domain/gpu-temperature.js",
+    "from": "    const detail = [describeHeadroom(tightest), clock].filter(Boolean).join(' — ');",
+    "to": "    const detail = [describeHeadroom(tightest)].filter(Boolean).join(' — ');",
+    "describes": "GPU temperature: the clock is never shown"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "name": "Thermal Throttle Monitor",
+  "description": "Colour-coded panel indicator for CPU, GPU, and NPU thermal throttle state. It reads the kernel counters that record throttling rather than inferring it from temperature, and says so where no counter exists. Intel CPU, GPU and NPU; AMD CPU and GPU are experimental.",
+  "uuid": "thermal-throttle-monitor@gheylen.github.io",
+  "version": 1,
+  "shell-version": ["46", "47", "48", "49", "50"],
+  "url": "https://github.com/gheylen/gnome-thermal-monitor",
+  "settings-schema": "org.gnome.shell.extensions.thermal-throttle-monitor"
+}

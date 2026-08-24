@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install GJS and the GSettings compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gjs libglib2.0-bin
+
+      - run: npm ci
+
+      # `make check` is exactly what a contributor runs locally: lint (including
+      # the architecture import rules), tests, the GJS adapter test, the schema,
+      # and the distributable build.
+      - run: make check
+
+      # The other half of the pin check. `make check` runs the offline half so
+      # a contributor's gate works without network; resolving each SHA upstream
+      # needs one, and CI has one. This is a public repository, so a pin that
+      # points at nothing — or at a commit the tag beside it does not name —
+      # breaks CI for everyone who opens a pull request, and this is the only
+      # place that can find out before they do.
+      - run: make verify-pins
+
+      - name: Keep the built extension for this commit
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: shell-extension-zip
+          path: dist/*.shell-extension.zip
+          if-no-files-found: error
+
+  # Its own job because its dependencies are heavy — GNOME Shell's data files,
+  # libadwaita and a virtual display — and because it runs in parallel, so it
+  # costs wall-clock time only if it is the slowest thing here. `make check`
+  # stays offline and desktop-free; this is the other half of what can be said
+  # about `prefs.js`.
+  preferences:
+    name: Preferences, against real widgets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install GNOME Shell's data files, libadwaita and a virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gjs gnome-shell gir1.2-adw-1 gir1.2-gtk-4.0 xvfb
+
+      - run: xvfb-run -a make test-prefs
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          log-opts: --all

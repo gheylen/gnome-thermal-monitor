@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 G Heylen -->
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<schemalist>
+  <schema id="org.gnome.shell.extensions.thermal-throttle-monitor"
+          path="/org/gnome/shell/extensions/thermal-throttle-monitor/">
+
+    <key name="temp-warn" type="i">
+      <default>88</default>
+      <range min="50" max="125"/>
+      <summary>Warning temperature (°C)</summary>
+      <description>Panel indicator turns orange above this temperature. This is an additional warning: the CPU's own throttle point (TjMax) is read from the kernel and reported independently of this value. Set it above this CPU's throttle point to switch it off.</description>
+    </key>
+
+    <key name="temp-crit" type="i">
+      <default>94</default>
+      <range min="50" max="125"/>
+      <summary>Critical temperature (°C)</summary>
+      <description>Panel indicator turns red above this temperature. This is an additional warning: the CPU's own throttle point (TjMax) is read from the kernel and reported independently of this value. Set it above this CPU's throttle point to switch it off.</description>
+    </key>
+
+    <key name="poll-interval" type="i">
+      <default>10</default>
+      <range min="1" max="60"/>
+      <summary>Poll interval (seconds)</summary>
+      <description>How often to read thermal sensors and throttle counters. Capped at 60 seconds: the CPU throttle counters are read as deltas between polls, so a longer interval would attribute a burst to a window far larger than the burst itself. Floored at 1 second because the NPU driver documents that as the shortest period at which its busy-time counter can be read without affecting job submission.</description>
+    </key>
+
+    <key name="hide-when-nominal" type="b">
+      <default>false</default>
+      <summary>Hide the indicator when nothing is throttling</summary>
+      <description>When enabled, the panel indicator is hidden while all components are nominal, and reappears on a warning or confirmed throttle event.</description>
+    </key>
+
+    <key name="notify-on-throttle" type="b">
+      <default>false</default>
+      <summary>Send a notification on confirmed throttling</summary>
+      <description>When enabled, a desktop notification is shown when a confirmed thermal throttle event begins.</description>
+    </key>
+
+  </schema>
+</schemalist>

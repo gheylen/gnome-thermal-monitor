@@ -1,0 +1,40 @@
+name: Feature request or hardware support
+description: Suggest an enhancement or request support for new hardware
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the use case or limitation you're hitting.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to see happen?
+    validations:
+      required: false
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware (for new-hardware requests)
+      description: CPU/GPU/NPU model and the relevant kernel driver, if known.
+      placeholder: "AMD Ryzen AI 9 HX 370 — k10temp / amdgpu"
+    validations:
+      required: false
+
+  - type: textarea
+    id: sysfs
+    attributes:
+      label: Relevant sysfs paths
+      description: |
+        If you're requesting hardware support, the contents of the relevant
+        sysfs directory help enormously. For example:
+        ls -R /sys/class/hwmon/ ; ls -R /sys/bus/pci/devices/*/
+      render: shell
+    validations:
+      required: false
