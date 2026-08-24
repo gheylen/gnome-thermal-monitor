@@ -1,0 +1,41 @@
+# Build output
+dist/
+schemas/gschemas.compiled
+
+# Node.js — development tooling only; the extension itself ships no dependencies
+node_modules/
+npm-debug.log*
+.npm/
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Editors and IDEs
+.vscode/
+.idea/
+.fleet/
+.zed/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+.*.swp
+*~
+\#*\#
+.#*
+
+# Merge and backup leftovers
+*.orig
+*.bak
+
+# Claude Code: the session-start hook and its registration are shared, so a
+# fresh agent session can run `make check` without guessing at the setup.
+# Everything else under .claude/ is per-developer — including
+# settings.local.json, which `.claude/*` already covers.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
